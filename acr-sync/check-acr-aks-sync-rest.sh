@@ -36,7 +36,7 @@ do
     [[ "$acr_token" == "" ]] && echo "Error: cannot get acr token." && exit 1
     # get latest 'prod-' tag and timestamp for repository from acr    
     acr_latest_prod=$(curl --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
-      "https://hmctspublic.azurecr.io/acr/v1/${repo}/_manifests" \
+      "https://hmctspublic.azurecr.io/acr/v1/${repo}/_manifests?n=300" \
       |jp "manifests[?not_null(tags[?starts_with(@, \`\"prod-\"\`)])]|max_by([*], &lastUpdateTime).[lastUpdateTime, tags[?starts_with(@, \`\"prod-\"\`)]|[0]]")
 
     acr_tag=$(echo $acr_latest_prod |jp -u '[1]')
@@ -49,6 +49,7 @@ do
     if [[ $sync_time_diff > 180 ]]
     then
       slack_message="Warning: AKS cluster $aks_cluster is running ${repo}:${tag} instead of ${repo}:${acr_tag} ($acr_date)."      
+      echo "$slack_message"
       curl --silent -X POST \
         -d "payload={\"channel\": \"#${slack_channel}\", \"username\": \"${aks_cluster}\", \"text\": \"${slack_message}\", \"icon_emoji\": \":${slack_icon}:\"}" \
         "$slack_webhook"
