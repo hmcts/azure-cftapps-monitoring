@@ -1,0 +1,32 @@
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-acr-sync
+  namespace: admin
+  labels:
+    app: check-acr-sync
+spec:
+  template:
+    metadata:
+      labels:
+        app: check-acr-sync
+    spec:
+        restartPolicy: Never
+        containers:
+        - name: check-acr-sync
+          image: hmcts/check-acr-sync:v1
+          imagePullPolicy: Always
+          env:
+            - name: SLACK_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-values
+                  key: slack-webhook
+            - name: SLACK_CHANNEL
+              value: aks-monitor-sbox
+            - name: AKS_CLUSTER
+              value: sbox
+            - name: SLACK_ICON
+              value: tim-webster
+  backoffLimit: 1

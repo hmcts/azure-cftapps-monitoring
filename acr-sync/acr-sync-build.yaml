@@ -1,0 +1,4 @@
+version: v1.0.0
+steps:
+  - build: -t {{.Run.Registry}}/check-acr-sync:{{.Run.ID}} -f Dockerfile .
+  - push: ["{{.Run.Registry}}/check-acr-sync:{{.Run.ID}}"]
