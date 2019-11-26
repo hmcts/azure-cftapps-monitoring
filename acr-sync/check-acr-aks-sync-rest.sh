@@ -38,7 +38,6 @@ do
     acr_latest_prod=$(curl --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
       "https://hmctspublic.azurecr.io/acr/v1/${repo}/_manifests" \
       |jp "manifests[?not_null(tags[?starts_with(@, \`\"prod-\"\`)])]|max_by([*], &lastUpdateTime).[lastUpdateTime, tags[?starts_with(@, \`\"prod-\"\`)]|[0]]")
-      #|jp -u "join(\`\"\n\"\`, manifests[?not_null(tags[?starts_with(@, \`\"prod-\"\`)])]|max_by([*], &lastUpdateTime).[lastUpdateTime, tags[?starts_with(@, \`\"prod-\"\`)]|[0]])"
 
     acr_tag=$(echo $acr_latest_prod |jp -u '[1]')
     # if latest prod tag in acr is deployed to aks, registry and cluster are in sync
