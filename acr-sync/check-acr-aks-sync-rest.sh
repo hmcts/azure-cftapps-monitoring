@@ -40,7 +40,7 @@ do
     # get latest 'prod-' tag and timestamp for repository from acr    
     acr_latest_prod=$(curl --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
       "https://hmctspublic.azurecr.io/acr/v1/${repo}/_tags?n=${ACR_MAX_RESULTS}" \
-      |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name])"
+      |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]")
 
     acr_tag=$(echo $acr_latest_prod |jp -u '[1]')
     # if latest prod tag in acr is deployed to aks, registry and cluster are in sync
