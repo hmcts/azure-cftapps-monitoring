@@ -32,16 +32,28 @@ do
     # acr access tokens are valid for 60secs 
     if [[ "$acr_token" == "" ]] || [[ $(($now_ts - $acr_token_ts)) > 45 ]]
     then
-      acr_token=$(curl --silent "https://hmctspublic.azurecr.io/oauth2/token?scope=repository:${repo}:pull&service=hmctspublic.azurecr.io" \
-        |jp -u 'access_token')
+      token_retries=0
+      while true
+      do
+        [[ $token_retries -gt 2 ]] && echo "Error: cannot get acr token for repository ${repo}" && exit 1
+        token_response=$(curl --silent "https://hmctspublic.azurecr.io/oauth2/token?scope=repository:${repo}:pull&service=hmctspublic.azurecr.io")
+        [[ "$token_response" != "" ]] && break
+        token_retries=$(($token_retries + 1))
+      done    
+      acr_token=$(echo "$token_response" |jp -u 'access_token')
       acr_token_ts=$(date '+%s')
     fi    
+    
     [[ "$acr_token" == "" ]] && echo "Error: cannot get acr token." && exit 1
     # get latest 'prod-' tag and timestamp for repository from acr    
-    acr_latest_prod=$(curl --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
-      "https://hmctspublic.azurecr.io/acr/v1/${repo}/_tags?n=${ACR_MAX_RESULTS}" \
-      |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]")
-
+    curl --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
+      "https://hmctspublic.azurecr.io/acr/v1/${repo}/_tags?n=${ACR_MAX_RESULTS}" > /tmp/acr_repo.json
+    if [[ -s /tmp/acr_repo.json ]]
+    then
+      acr_latest_prod=$(cat /tmp/acr_repo.json |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]")
+    else
+      echo "Error getting repository ${repo} - empty response." && exit 1
+    fi
     acr_tag=$(echo $acr_latest_prod |jp -u '[1]')
     # if latest prod tag in acr is deployed to aks, registry and cluster are in sync
     [[ "$acr_tag" == "$tag" ]] && echo "ACR and AKS synced on tag ${repo}:${tag}" && continue
@@ -64,5 +76,6 @@ do
           "$slack_webhook"
       fi
     fi
+  
   done
 done
