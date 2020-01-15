@@ -51,8 +51,12 @@ do
     if [[ -s /tmp/acr_repo.json ]]
     then
       acr_latest_prod=$(cat /tmp/acr_repo.json |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]")
+      if [[ "$acr_latest_prod" == "null" ]] || [[ "$acr_latest_prod" == "" ]]
+      then
+        echo "Error getting latest prod tag for ${repo} - empty response." && continue
+      fi
     else
-      echo "Error getting repository ${repo} - empty response." && exit 1
+      echo "Error getting repository ${repo} - empty response." && continue
     fi
     acr_tag=$(echo $acr_latest_prod |jp -u '[1]')
     # if latest prod tag in acr is deployed to aks, registry and cluster are in sync
