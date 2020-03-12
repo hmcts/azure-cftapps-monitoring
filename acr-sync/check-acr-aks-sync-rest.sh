@@ -3,7 +3,7 @@ set -e
 
 [[ "$ACR_SYNC_DEBUG" == "true" ]] && set -x
 
-aks_cluster=${1:-$AKS_CLUSTER}
+aks_cluster=${1:-$CLUSTER_NAME}
 slack_webhook=${2:-$SLACK_WEBHOOK}
 slack_channel=${3:-$SLACK_CHANNEL} 
 slack_icon=${4:-$SLACK_ICON}
