@@ -7,8 +7,8 @@ RUN go mod download
 COPY . /build
 ENV CGO_ENABLED=0
 RUN go build -v
-RUN groupadd -g 999 user && \
-    useradd -r -u 999 -g user user
+RUN groupadd -g 1000 user && \
+    useradd -r -u 1000 -g user user
 RUN pwd
 RUN ls
 

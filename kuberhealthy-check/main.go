@@ -29,12 +29,11 @@ func init() {
 	deploymentName = os.Getenv("DEPLOYMENT_NAME")
 	serviceName = os.Getenv("SERVICE_NAME")
 	podLabel = os.Getenv("POD_LABEL")
-	log.Println("deploymentName : ", deploymentName)
-	log.Println("serviceName : ", serviceName)
-	log.Println("targetNamespace : ", targetNamespace)
-	log.Println("podLabel : ", podLabel)
-	checkclient.Debug = true
-
+	checkclient.Debug = os.Getenv("CHECK_CLIENT_DEBUG")
+	log.Debugln("deploymentName : ", deploymentName)
+	log.Debugln("serviceName : ", serviceName)
+	log.Debugln("targetNamespace : ", targetNamespace)
+	log.Debugln("podLabel : ", podLabel)
 }
 
 func main() {
@@ -46,25 +45,19 @@ func main() {
 	if len(deploymentName) > 0 {
 		log.Infoln("performing deployment check", deploymentName, targetNamespace)
 		deployment, failures := getDeployment(client, deploymentName, targetNamespace)
-		if deployment != nil {
-			if deployment.Status.ReadyReplicas >= 1 {
-				log.Infoln("check successful, at least 1 replica found.")
-				reportSuccess()
-				return
-			}
-			failures = append(failures, "Not even 1 replica available", deployment.Name)
+		if deployment.Status.ReadyReplicas >= 1 {
+			log.Infoln("check successful, at least 1 replica found.")
+			reportSuccess()
+			return
 		}
 		reportFailure(failures)
 	} else if len(serviceName) > 0 {
 		log.Infoln("performing load balancer ip check", serviceName, targetNamespace)
 		service, failures := getService(client, serviceName, targetNamespace)
-		if service != nil {
-			if len(service.Status.LoadBalancer.Ingress[0].IP) > 0 {
-				log.Infoln("check successful, load balancer ip is set")
-				reportSuccess()
-				return
-			}
-			failures = append(failures, "Load balancer ip not set", service.Name)
+		if len(service.Status.LoadBalancer.Ingress[0].IP) > 0 {
+			log.Infoln("check successful, load balancer ip is set")
+			reportSuccess()
+			return
 		}
 		reportFailure(failures)
 	} else if len(podLabel) > 0 {
@@ -76,6 +69,7 @@ func main() {
 				return
 			}
 			failures = append(failures, "Pod not running", pod.Name)
+			return
 		}
 		reportFailure(failures)
 	}
@@ -128,6 +122,7 @@ func reportSuccess() {
 }
 
 func reportFailure(failures []string) {
+	log.Println("Reporting failures", failures)
 	err := checkclient.ReportFailure(failures)
 	if err != nil {
 		log.Println("Error reporting failures to Kuber healthy servers", err)
