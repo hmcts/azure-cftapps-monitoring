@@ -1,0 +1,7 @@
+*
+
+# exceptions from `exclude all` rule
+
+!main.go
+!go.mod
+!go.sum

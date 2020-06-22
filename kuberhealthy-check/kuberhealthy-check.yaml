@@ -1,0 +1,78 @@
+apiVersion: comcast.github.io/v1
+kind: KuberhealthyCheck
+metadata:
+  name: deployment-status
+  namespace: monitoring
+spec:
+  runInterval: 5m
+  timeout: 15m
+  podSpec:
+    securityContext:
+      runAsUser: 999
+      fsGroup: 999
+    containers:
+      - env:
+          - name: DEPLOYMENT_NAME
+            value: "flux"
+          - name: TARGET_NAMESPACE
+            value: "admin"
+        image: hmctspublic.azurecr.io/monitoring/kuberhealthy-check:latest
+        imagePullPolicy: Always
+        name: main
+        resources:
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+    serviceAccountName: kuberhealthy-check-sa
+---
+# Source: kuberhealthy/templates/kuberhealthy-check-sa.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kuberhealthy-check-sa
+  namespace: monitoring
+---
+# Source: kuberhealthy/templates/kuberhealthy-check-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kuberhealthy-check-role
+rules:
+  - apiGroups:
+      - "apps"
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+---
+# Source: kuberhealthy/templates/kuberhealthy-check-rb.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kuberhealthy-check-rb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kuberhealthy-check-role
+subjects:
+  - kind: ServiceAccount
+    name: kuberhealthy-check-sa
+    namespace: monitoring
