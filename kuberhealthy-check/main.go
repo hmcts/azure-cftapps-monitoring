@@ -5,6 +5,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 
 	checkclient "github.com/Comcast/kuberhealthy/v2/pkg/checks/external/checkclient"
 	"github.com/Comcast/kuberhealthy/v2/pkg/kubeClient"
@@ -29,7 +30,7 @@ func init() {
 	deploymentName = os.Getenv("DEPLOYMENT_NAME")
 	serviceName = os.Getenv("SERVICE_NAME")
 	podLabel = os.Getenv("POD_LABEL")
-	checkclient.Debug = os.Getenv("CHECK_CLIENT_DEBUG")
+	checkclient.Debug = getEnvAsBool("CHECK_CLIENT_DEBUG", true)
 	log.Debugln("deploymentName : ", deploymentName)
 	log.Debugln("serviceName : ", serviceName)
 	log.Debugln("targetNamespace : ", targetNamespace)
@@ -54,10 +55,14 @@ func main() {
 	} else if len(serviceName) > 0 {
 		log.Infoln("performing load balancer ip check", serviceName, targetNamespace)
 		service, failures := getService(client, serviceName, targetNamespace)
-		if len(service.Status.LoadBalancer.Ingress[0].IP) > 0 {
-			log.Infoln("check successful, load balancer ip is set")
-			reportSuccess()
-			return
+		if len(service.Status.LoadBalancer.Ingress) > 0 {
+			if len(service.Status.LoadBalancer.Ingress[0].IP) > 0 {
+				log.Infoln("check successful, load balancer ip is set")
+				reportSuccess()
+				return
+			}
+		} else {
+			failures = append(failures, "Load balancer not set", serviceName)
 		}
 		reportFailure(failures)
 	} else if len(podLabel) > 0 {
@@ -128,4 +133,12 @@ func reportFailure(failures []string) {
 		log.Println("Error reporting failures to Kuber healthy servers", err)
 		os.Exit(1)
 	}
+}
+
+func getEnvAsBool(name string, defaultVal bool) bool {
+	valStr := os.Getenv(name)
+	if val, err := strconv.ParseBool(valStr); err == nil {
+		return val
+	}
+	return defaultVal
 }
