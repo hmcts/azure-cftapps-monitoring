@@ -34,3 +34,6 @@ The `Kuber Healthy Check` container can be configured to perform 3 different che
       value: "kube-system"
    ```
 
+### Publishing image
+
+Image is published on commit to master, see [acr task](bin/acr-task.sh)
