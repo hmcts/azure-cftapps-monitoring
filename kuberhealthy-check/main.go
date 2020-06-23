@@ -66,14 +66,17 @@ func main() {
 		}
 		reportFailure(failures)
 	} else if len(podLabel) > 0 {
-		log.Infoln("performing pod running check", podLabel, targetNamespace)
+		log.Infoln("performing pod ready check", podLabel, targetNamespace)
 		pods, failures := getPodsByLabel(client, podLabel, targetNamespace)
 		for _, pod := range pods.Items {
-			if pod.Status.Phase == corev1.PodRunning {
-				reportSuccess()
-				return
+
+			for _, condition := range pod.Status.Conditions {
+				if condition.Type == corev1.ContainersReady && condition.Status == corev1.ConditionTrue {
+					reportSuccess()
+					return
+				}
 			}
-			failures = append(failures, "Pod not running", pod.Name)
+			failures = append(failures, "Pod not ready", pod.Name)
 			return
 		}
 		reportFailure(failures)
