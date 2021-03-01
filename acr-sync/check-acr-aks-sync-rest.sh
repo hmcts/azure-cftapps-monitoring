@@ -10,7 +10,7 @@ slack_icon=${4:-$SLACK_ICON}
 acr_max_results=${5:-$ACR_MAX_RESULTS}
 
 
-skip_namespaces="admin default kube-node-lease kube-public kube-system neuvector camunda"
+skip_namespaces="admin default kube-node-lease kube-public kube-system neuvector camunda docmosis"
 sa_token=$(cat /run/secrets/kubernetes.io/serviceaccount/token)
 [[ "$sa_token" == "" ]] && echo "Error: cannot get service account token." && exit 1
 all_namespaces=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/ \
