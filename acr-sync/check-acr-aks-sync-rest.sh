@@ -10,8 +10,7 @@ slack_icon=${4:-$SLACK_ICON}
 acr_max_results=${5:-$ACR_MAX_RESULTS}
 
 
-skip_namespaces="admin default kube-node-lease kube-public kube-system neuvector"
-hmctsprivate_namespaces="camunda docmosis"
+skip_namespaces="admin default kube-node-lease kube-public kube-system neuvector camunda docmosis"
 sa_token=$(cat /run/secrets/kubernetes.io/serviceaccount/token)
 [[ "$sa_token" == "" ]] && echo "Error: cannot get service account token." && exit 1
 all_namespaces=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/ \
@@ -25,15 +24,10 @@ do
   echo "** Namespace $_ns hosts $(echo $images |wc -w) unique images to check..."
   for _image in ${images}
   do
+    acr="$(echo $image |cut -d / -f 1)"
     rt="$(echo $_image |cut -d / -f 2,3)"
     repo="$(echo $rt |cut -d : -f 1)"
     tag="$(echo $rt |cut -d : -f 2)"
-
-    if [[ "$hmctsprivate_namespaces" =~ "$_ns" ]]; then
-    acr_repo="hmctsprivate"
-    else 
-    acr_repo="hmctspublic"
-    fi
 
     now_ts=$(date '+%s')
     # acr access tokens are valid for 60secs 
@@ -43,7 +37,7 @@ do
       while true
       do
         [[ $token_retries -gt 2 ]] && echo "Error: cannot get acr token for repository ${repo}" && exit 1
-        token_response=$(curl --silent "https://${acr_repo}.azurecr.io/oauth2/token?scope=repository:${repo}:pull&service=${acr_repo}.azurecr.io")
+        token_response=$(curl --silent "https://${acr}/oauth2/token?scope=repository:${repo}:pull&service=${acr}")
         [[ "$token_response" != "" ]] && break
         token_retries=$(($token_retries + 1))
       done    
@@ -54,7 +48,7 @@ do
     [[ "$acr_token" == "" ]] && echo "Error: cannot get acr token." && exit 1
     # get latest 'prod-' tag and timestamp for repository from acr    
     curl --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
-      "https://${acr_repo}.azurecr.io/acr/v1/${repo}/_tags?n=${ACR_MAX_RESULTS}" > /tmp/acr_repo.json
+      "https://${acr}/acr/v1/${repo}/_tags?n=${ACR_MAX_RESULTS}" > /tmp/acr_repo.json
     if [[ -s /tmp/acr_repo.json ]]
     then
       acr_latest_prod=$(cat /tmp/acr_repo.json |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]")
