@@ -24,7 +24,7 @@ do
   echo "** Namespace $_ns hosts $(echo $images |wc -w) unique images to check..."
   for _image in ${images}
   do
-    acr="$(echo $image |cut -d / -f 1)"
+    acr="$(echo $_image |cut -d / -f 1)"
     rt="$(echo $_image |cut -d / -f 2,3)"
     repo="$(echo $rt |cut -d : -f 1)"
     tag="$(echo $rt |cut -d : -f 2)"
