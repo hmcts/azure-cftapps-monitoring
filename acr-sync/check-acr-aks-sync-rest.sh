@@ -22,6 +22,7 @@ do
   images=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns}/pods/ --insecure \
     | jp -u 'join(`"\n"`, items[?status.phase!=`"Succeeded"`].spec.containers[].image)' |grep 'prod-' |grep -v 'test:prod-' | sort |uniq)
   echo "** Namespace $_ns hosts $(echo $images |wc -w) unique images to check..."
+  acr_token=""
   for _image in ${images}
   do
     acr="$(echo $_image |cut -d / -f 1)"
