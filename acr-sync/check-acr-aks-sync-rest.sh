@@ -8,7 +8,7 @@ slack_webhook=${2:-$SLACK_WEBHOOK}
 slack_channel=${3:-$SLACK_CHANNEL} 
 slack_icon=${4:-$SLACK_ICON}
 acr_max_results=${5:-$ACR_MAX_RESULTS}
-
+hmctsprivate_token_password=${6:-$HMCTSPRIVATE_TOKEN_PASSWORD}
 
 skip_namespaces="admin default kube-node-lease kube-public kube-system neuvector"
 sa_token=$(cat /run/secrets/kubernetes.io/serviceaccount/token)
@@ -34,11 +34,17 @@ do
     # acr access tokens are valid for 60secs 
     if [[ "$acr_token" == "" ]] || [[ $(($now_ts - $acr_token_ts)) > 45 ]]
     then
+      
+      if  [[ ${acr} == hmctsprivate* ]] ;
+      then
+         acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
+         auth_argument="-H \"Authorization: Basic $ACR_CREDENTIALS\""
+      fi
       token_retries=0
       while true
       do
         [[ $token_retries -gt 2 ]] && echo "Error: cannot get acr token for repository ${repo}" && exit 1
-        token_response=$(curl --silent "https://${acr}/oauth2/token?scope=repository:${repo}:pull&service=${acr}")
+        token_response=$(curl --silent ${auth_argument} "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
         [[ "$token_response" != "" ]] && break
         token_retries=$(($token_retries + 1))
       done    
