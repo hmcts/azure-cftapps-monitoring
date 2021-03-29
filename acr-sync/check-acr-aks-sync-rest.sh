@@ -38,7 +38,7 @@ do
       if  [[ ${acr} == "hmctsprivate.azurecr.io" ]] ;
       then
          acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
-         auth_argument="-H \"Authorization: Basic $ACR_CREDENTIALS\""
+         auth_argument="-H \"Authorization: Basic $acr_credentials\""
       fi
       token_retries=0
       while true
