@@ -34,17 +34,17 @@ do
     # acr access tokens are valid for 60secs 
     if [[ "$acr_token" == "" ]] || [[ $(($now_ts - $acr_token_ts)) > 45 ]]
     then
-      
-      if  [[ ${acr} == "hmctsprivate.azurecr.io" ]] ;
-      then
-         acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
-         auth_argument="-H \"Authorization: Basic $acr_credentials\""
-      fi
       token_retries=0
       while true
       do
         [[ $token_retries -gt 2 ]] && echo "Error: cannot get acr token for repository ${repo}" && exit 1
-        token_response=$(curl --silent ${auth_argument} "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+        if  [[ ${acr} == "hmctsprivate.azurecr.io" ]] ;
+        then
+          acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
+          token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+        else
+          token_response=$(curl --silent -H "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+        fi
         [[ "$token_response" != "" ]] && break
         token_retries=$(($token_retries + 1))
       done    
