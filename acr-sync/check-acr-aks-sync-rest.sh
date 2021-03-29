@@ -43,7 +43,7 @@ do
           acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
           token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
         else
-          token_response=$(curl --silent -H "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+          token_response=$(curl --silent "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
         fi
         [[ "$token_response" != "" ]] && break
         token_retries=$(($token_retries + 1))
