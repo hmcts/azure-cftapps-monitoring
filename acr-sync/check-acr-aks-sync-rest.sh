@@ -35,7 +35,7 @@ do
     if [[ "$acr_token" == "" ]] || [[ $(($now_ts - $acr_token_ts)) > 45 ]]
     then
       
-      if  [[ ${acr} == hmctsprivate* ]] ;
+      if  [[ ${acr} == "hmctsprivate.azurecr.io" ]] ;
       then
          acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
          auth_argument="-H \"Authorization: Basic $ACR_CREDENTIALS\""
