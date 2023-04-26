@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-set -ex
+set -e
+
+[[ "$SCRIPT_DEBUG" == "true" ]] && set -x
 
 CLUSTER_NAME=${1:-$CLUSTER_NAME}
 ARTIFACT_URL=${2:-$ARTIFACT_URL}
