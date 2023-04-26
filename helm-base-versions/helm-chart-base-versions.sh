@@ -32,7 +32,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
   # Iterate through Helm chart CRDs per namespace, fux saves helm charts with starting on namespace
   for HR_NAME in $(echo "$HELM_CHARTS" | jq -r '.items[] | select(.metadata.name | startswith("'$NAMESPACE-'")) | .metadata.name'); do
 
-    #echo "Processing $HR_NAME"
+    echo "Processing $HR_NAME"
 
     #Get artifact path from helm chart stats
     CHART_PATH=$(echo "$HELM_CHARTS" | jq -r '.items[] | select(.metadata.name == "'$HR_NAME'") | .status.artifact.path')
@@ -46,7 +46,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
       tar -xf "/tmp/$CHART_NAME.tar.gz" -C /tmp/
 
       for DEPRECATED_CHART_NAME in $( echo "${DEPRECATION_CONFIG}" | jq -r 'keys | .[]' ); do
-        #echo "checking $DEPRECATED_CHART_NAME"
+        echo "checking $DEPRECATED_CHART_NAME"
         CURRENT_VERSION=$(helm dependency ls /tmp/"$CHART_NAME" | grep "^${DEPRECATED_CHART_NAME} " |awk '{ print $2}' | sed "s/~//g" | sed 's/v//' | sed "s/\^//g")
 
         # Check only if chart is present

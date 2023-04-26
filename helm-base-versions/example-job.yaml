@@ -21,7 +21,10 @@ spec:
             - name: CLUSTER_NAME
               value: "cft-00-aks"
             - name: COSMOS_KEY
-              value: "<your key in here>"
+              valueFrom:
+                secretKeyRef:
+                  name: helm-base-versions
+                  key: cosmos-key
             - name: ARTIFACT_URL
               value: "http://source-controller.flux-system.svc.cluster.local."
             - name: API_SERVER_URL
