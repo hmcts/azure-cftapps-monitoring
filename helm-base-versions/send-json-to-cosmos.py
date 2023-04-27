@@ -34,4 +34,4 @@ document = {
 }
 container.create_item(body=document)
 
-print(document + " created successfully in Cosmos")
+print(document ," created successfully in Cosmos")
