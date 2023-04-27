@@ -61,7 +61,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                     break
                 fi
           done
-          ./send-json-to-cosmos.sh $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
+          python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
         fi
       done
 
@@ -71,7 +71,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     else
       CHART_NAME=$(echo "$HR_NAME"|sed "s/$NAMESPACE-//")
       echo "$HR_NAME chart not loaded, marking as error"
-      ./send-json-to-cosmos.sh $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
+      python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
     fi
   done
 done
