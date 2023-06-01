@@ -25,6 +25,11 @@ spec:
                 secretKeyRef:
                   name: helm-base-versions
                   key: cosmos-key
+            - name: SLACK_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: helm-base-versions
+                  key: slack-webhook
             - name: ARTIFACT_URL
               value: "http://source-controller.flux-system.svc.cluster.local."
             - name: API_SERVER_URL
