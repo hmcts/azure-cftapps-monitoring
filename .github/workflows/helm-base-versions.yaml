@@ -12,23 +12,8 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [16.x]
-
     steps:
       - uses: actions/checkout@v3
-
-      # Beginning of yarn setup, keep in sync between all workflows, see ci.yml
-      - name: use node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          registry-url: https://registry.npmjs.org/ # Needed for auth
-          cache: 'npm'
-      - name: npm install
-        run: npm install
-      # End of  setup
 
       - name: "Get Short Sha Hash"
         id: get-short-sha
