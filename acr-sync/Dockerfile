@@ -1,4 +1,4 @@
-FROM alpine:3.15
+FROM alpine:3.18
 
 ARG jp_version=0.2.1
 ARG TARGETARCH=amd64
