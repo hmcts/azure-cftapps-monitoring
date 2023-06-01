@@ -27,6 +27,7 @@ SKIP_NAMESPACES="admin default kube-node-lease kube-public kube-system neuvector
 for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     NAMESPACE=$(jq_decode "$NAMESPACE_ROW" '.metadata.name')
     TEAM_SLACK_CHANNEL=$(jq_decode "$NAMESPACE_ROW" '.metadata.labels.slackChannel')
+    NOTIFICATION_ARRAY=()
 
     echo "processing $NAMESPACE"
     for SKIP_NS in $SKIP_NAMESPACES; do [ "$SKIP_NS" == "$NAMESPACE" ] && continue 2; done
@@ -61,9 +62,13 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                     IS_DEPRECATED=true
                     WARNING_MESSAGE="*$CHART_NAME* chart on *$CLUSTER_NAME* cluster has base chart *$DEPRECATED_CHART_NAME* version *$CURRENT_VERSION* which is deprecated, please upgrade to at least *${DEPRECATED_CHART_VERSION}*"
                     echo "$WARNING_MESSAGE"
-                    curl --silent -X POST \
-                        -d "payload={\"channel\": \"#helm-notify-test\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
-                        "$SLACK_WEBHOOK"
+                    if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
+                        NOTIFICATION_ARRAY+=("$CHART_NAME")
+                        curl --silent -X POST \
+                            -d "payload={\"channel\": \"#helm-notify-test\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
+                            "$SLACK_WEBHOOK"
+                    fi
+
                     break
                 fi
           done
