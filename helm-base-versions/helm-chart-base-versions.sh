@@ -59,10 +59,10 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                 #echo "checking $CURRENT_VERSION and $DEPRECATED_CHART_VERSION for $CHART_NAME "
                 if [ $(ver "$CURRENT_VERSION") -lt $(ver "$DEPRECATED_CHART_VERSION") ]; then
                     IS_DEPRECATED=true
-                    WARNING_MESSAGE="$HR_NAME HR on $CLUSTER_NAME cluster has base chart $DEPRECATED_CHART_NAME version $CURRENT_VERSION which is deprecated, please upgrade to at least ${DEPRECATED_CHART_VERSION}"
+                    WARNING_MESSAGE="*$CHART_NAME* chart on *$CLUSTER_NAME* cluster has base chart *$DEPRECATED_CHART_NAME* version *$CURRENT_VERSION* which is deprecated, please upgrade to at least *${DEPRECATED_CHART_VERSION}*"
                     echo "$WARNING_MESSAGE"
                     curl --silent -X POST \
-                        -d "payload={\"channel\": \"#${TEAM_SLACK_CHANNEL}\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
+                        -d "payload={\"channel\": \"#helm-notify-test\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
                         "$SLACK_WEBHOOK"
                     break
                 fi
