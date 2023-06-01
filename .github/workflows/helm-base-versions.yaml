@@ -1,0 +1,45 @@
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+name: Publish
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Get Short Sha Hash"
+        id: get-short-sha
+        uses: actions/github-script@v6.4.1
+        with:
+          script: |
+            const shortSha = context.sha.substring(0, 7)
+            core.setOutput('shortSha', shortSha)
+
+      - name: 'Get Commit Timestamp'
+        id: get-timestamp
+        run: |
+          TIMESTAMP=$(git log -1 --format='%cI' | sed -e's/[-T:]//g' -e's/+.*$//g')
+          echo "::set-output name=timestamp::$TIMESTAMP"
+
+      - name: 'Build and push image'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker build helm-base-versions -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+        if: startsWith(github.ref, 'refs/pull')
+      - run: |
+          docker build helm-base-versions -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+        if: github.ref == 'refs/heads/main'
