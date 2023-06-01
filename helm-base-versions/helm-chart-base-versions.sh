@@ -7,6 +7,7 @@ CLUSTER_NAME=${1:-$CLUSTER_NAME}
 ARTIFACT_URL=${2:-$ARTIFACT_URL}
 API_SERVER_URL=${3:-$API_SERVER_URL}
 COSMOS_KEY=${4:-$COSMOS_KEY}
+SLACK_WEBHOOK=${5:-$SLACK_WEBHOOK}
 
 
 DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-jenkins-config/master/deprecation-config.yml | yq e '.helm' -o=json)
@@ -25,6 +26,7 @@ SKIP_NAMESPACES="admin default kube-node-lease kube-public kube-system neuvector
 #Iterate through all namespaces
 for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     NAMESPACE=$(jq_decode "$NAMESPACE_ROW" '.metadata.name')
+    TEAM_SLACK_CHANNEL=$(jq_decode "$NAMESPACE_ROW" '.metadata.labels.slackChannel')
 
     echo "processing $NAMESPACE"
     for SKIP_NS in $SKIP_NAMESPACES; do [ "$SKIP_NS" == "$NAMESPACE" ] && continue 2; done
@@ -57,7 +59,11 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                 #echo "checking $CURRENT_VERSION and $DEPRECATED_CHART_VERSION for $CHART_NAME "
                 if [ $(ver "$CURRENT_VERSION") -lt $(ver "$DEPRECATED_CHART_VERSION") ]; then
                     IS_DEPRECATED=true
-                    echo "$HR_NAME HR has base chart $DEPRECATED_CHART_NAME version $CURRENT_VERSION which is deprecated, please upgrade to at least ${DEPRECATED_CHART_VERSION}"
+                    WARNING_MESSAGE="$HR_NAME HR on $CLUSTER_NAME cluster has base chart $DEPRECATED_CHART_NAME version $CURRENT_VERSION which is deprecated, please upgrade to at least ${DEPRECATED_CHART_VERSION}"
+                    echo "$WARNING_MESSAGE"
+                    curl --silent -X POST \
+                        -d "payload={\"channel\": \"#${TEAM_SLACK_CHANNEL}\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
+                        "$SLACK_WEBHOOK"
                     break
                 fi
           done
