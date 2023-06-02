@@ -42,4 +42,4 @@ jobs:
       - run: |
           docker build helm-base-versions -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
