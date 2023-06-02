@@ -8,7 +8,7 @@ ARTIFACT_URL=${2:-$ARTIFACT_URL}
 API_SERVER_URL=${3:-$API_SERVER_URL}
 COSMOS_KEY=${4:-$COSMOS_KEY}
 SLACK_WEBHOOK=${5:-$SLACK_WEBHOOK}
-ENABLE_SLACK=${6:-ENABLE_SLACK}
+ENABLE_SLACK=${6:-$ENABLE_SLACK}
 
 
 DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-jenkins-config/master/deprecation-config.yml | yq e '.helm' -o=json)
@@ -73,7 +73,9 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                     break
                 fi
           done
-          python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
+          if [[  "$ENABLE_SLACK" != "true" ]]; then
+            python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
+          fi
         fi
       done
 
@@ -82,8 +84,10 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
 
     else
       CHART_NAME=$(echo "$HR_NAME"|sed "s/$NAMESPACE-//")
-      echo "$HR_NAME chart not loaded, marking as error"
-      python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
+      if [[  "$ENABLE_SLACK" != "true" ]]; then
+        echo "$HR_NAME chart not loaded, marking as error"
+        python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
+      fi
     fi
   done
 done
