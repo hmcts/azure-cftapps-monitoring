@@ -8,6 +8,7 @@ ARTIFACT_URL=${2:-$ARTIFACT_URL}
 API_SERVER_URL=${3:-$API_SERVER_URL}
 COSMOS_KEY=${4:-$COSMOS_KEY}
 SLACK_WEBHOOK=${5:-$SLACK_WEBHOOK}
+ENABLE_SLACK=${6:-ENABLE_SLACK}
 
 
 DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-jenkins-config/master/deprecation-config.yml | yq e '.helm' -o=json)
@@ -62,7 +63,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                     IS_DEPRECATED=true
                     WARNING_MESSAGE="*$CHART_NAME* chart on *$CLUSTER_NAME* cluster has base chart *$DEPRECATED_CHART_NAME* version *$CURRENT_VERSION* which is deprecated, please upgrade to at least *${DEPRECATED_CHART_VERSION}*"
                     echo "$WARNING_MESSAGE"
-                    if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
+                    if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} && "$ENABLE_SLACK" == "true" ]]; then
                         NOTIFICATION_ARRAY+=("$CHART_NAME")
                         curl --silent -X POST \
                             -d "payload={\"channel\": \"#helm-notify-test\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
