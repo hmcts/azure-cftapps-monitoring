@@ -85,8 +85,8 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     else
       CHART_NAME=$(echo "$HR_NAME"|sed "s/$NAMESPACE-//")
       if [[  "$ENABLE_SLACK" != "true" ]]; then
-      echo "$HR_NAME chart not loaded, marking as error"
-      python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
+        echo "$HR_NAME chart not loaded, marking as error"
+        python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
       fi
     fi
   done
