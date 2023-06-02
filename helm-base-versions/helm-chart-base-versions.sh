@@ -66,7 +66,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                     if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} && "$ENABLE_SLACK" == "true" ]]; then
                         NOTIFICATION_ARRAY+=("$CHART_NAME")
                         curl --silent -X POST \
-                            -d "payload={\"channel\": \"#helm-notify-test\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
+                            -d "payload={\"channel\": \"#${TEAM_SLACK_CHANNEL}\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
                             "$SLACK_WEBHOOK"
                     fi
 
