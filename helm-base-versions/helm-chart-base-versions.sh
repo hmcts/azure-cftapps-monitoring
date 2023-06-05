@@ -63,19 +63,19 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                     IS_DEPRECATED=true
                     WARNING_MESSAGE="*$CHART_NAME* chart on *$CLUSTER_NAME* cluster has base chart *$DEPRECATED_CHART_NAME* version *$CURRENT_VERSION* which is deprecated, please upgrade to at least *${DEPRECATED_CHART_VERSION}*"
                     echo "$WARNING_MESSAGE"
-                    if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} && "$ENABLE_SLACK" == "true" ]]; then
-                        NOTIFICATION_ARRAY+=("$CHART_NAME")
+                    if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
+                      NOTIFICATION_ARRAY+=("$CHART_NAME")
+                      if [[ "$ENABLE_SLACK" == "true" ]]; then
                         curl --silent -X POST \
                             -d "payload={\"channel\": \"#${TEAM_SLACK_CHANNEL}\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
                             "$SLACK_WEBHOOK"
+                      else
+                        python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
+                      fi
                     fi
-
                     break
                 fi
           done
-          if [[  "$ENABLE_SLACK" != "true" ]]; then
-            python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
-          fi
         fi
       done
 
