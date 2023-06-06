@@ -40,10 +40,12 @@ bullet_delimiter = "\n> :red: "
 for chartName in chartsMap:
     baseChart = chartsMap[chartName][0]["baseChart"]
     baseChartVersion = chartsMap[chartName][0]["baseChartVersion"]
-    PIPELINE_MESSAGE="<https://dev.azure.com/hmcts/$ADO_PROJECT/_build?definitionId=$ADO_DEFINITION_ID|$PIPELINE_NAME pipeline>"
-
-    slackMessage = f">*{chartName}* chart is using a deprecated chart *{baseChart}* version *{baseChartVersion}*" \
-                   f" on the below clusters, please upgrade to the <https://github.com/hmcts/chart-{baseChart}/releases|latest release>:\n>"
+    if baseChart == "":
+        slackMessage = f">*{chartName}* chart is having invalid configuration on the below clusters," \
+                       f" please fix the configuration:\n>"
+    else:
+        slackMessage = f">*{chartName}* chart is using a deprecated chart *{baseChart}* version *{baseChartVersion}*" \
+                       f" on the below clusters, please upgrade to the <https://github.com/hmcts/chart-{baseChart}/releases|latest release>:\n>"
     clusters = []
     for deprecation in chartsMap[chartName]:
         clusters.append(deprecation["clusterName"])
@@ -56,6 +58,5 @@ for chartName in chartsMap:
         "text": slackMessage,
         "icon_emoji": ":flux:",
     }
-    requests.post(slack_webhook, json=payload)
 
 
