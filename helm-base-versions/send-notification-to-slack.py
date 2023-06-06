@@ -58,5 +58,6 @@ for chartName in chartsMap:
         "text": slackMessage,
         "icon_emoji": ":flux:",
     }
+    requests.post(slack_webhook, json=payload)
 
 

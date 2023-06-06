@@ -22,7 +22,7 @@ HELM_CHARTS=$(curl -k -s -H "Authorization: Bearer $SA_TOKEN" "$API_SERVER_URL"/
 function ver { printf "%03d%03d%03d%03d" $(echo "$1" | tr '.' ' '); }
 function jq_decode() { echo "${1}" | base64 --decode | jq -r "${2}"; }
 
-SKIP_NAMESPACES="admin default kube-node-lease kube-public kube-system neuvector"
+SKIP_NAMESPACES="admin default kube-node-lease kube-public kube-system neuvector monitoring"
 
 #Iterate through all namespaces
 for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
