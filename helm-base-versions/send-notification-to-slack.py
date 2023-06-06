@@ -41,7 +41,7 @@ for chartName in chartsMap:
     baseChart = chartsMap[chartName][0]["baseChart"]
     baseChartVersion = chartsMap[chartName][0]["baseChartVersion"]
     if baseChart == "":
-        slackMessage = f">*{chartName}* chart is having invalid configuration on the below clusters," \
+        slackMessage = f">*{chartName}* chart has invalid configuration on the below clusters," \
                        f" please fix the configuration:\n>"
     else:
         slackMessage = f">*{chartName}* chart is using a deprecated chart *{baseChart}* version *{baseChartVersion}*" \
