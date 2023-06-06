@@ -8,7 +8,7 @@ ARTIFACT_URL=${2:-$ARTIFACT_URL}
 API_SERVER_URL=${3:-$API_SERVER_URL}
 COSMOS_KEY=${4:-$COSMOS_KEY}
 SLACK_WEBHOOK=${5:-$SLACK_WEBHOOK}
-ENABLE_SLACK=${6:-$ENABLE_SLACK}
+MODE=${6:-$MODE}
 
 
 DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-jenkins-config/master/deprecation-config.yml | yq e '.helm' -o=json)
@@ -30,64 +30,61 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     TEAM_SLACK_CHANNEL=$(jq_decode "$NAMESPACE_ROW" '.metadata.labels.slackChannel')
     NOTIFICATION_ARRAY=()
 
-    echo "processing $NAMESPACE"
-    for SKIP_NS in $SKIP_NAMESPACES; do [ "$SKIP_NS" == "$NAMESPACE" ] && continue 2; done
+    if [[ $MODE == "notify" ]]; then
+      python3 send-notification-to-slack.py "$COSMOS_KEY" "$SLACK_WEBHOOK" "$NAMESPACE" "$TEAM_SLACK_CHANNEL"
+    else
 
-  # Iterate through Helm chart CRDs per namespace, fux saves helm charts with starting on namespace
-  for HR_NAME in $(echo "$HELM_CHARTS" | jq -r '.items[] | select(.metadata.name | startswith("'$NAMESPACE-'")) | .metadata.name'); do
+      echo "processing $NAMESPACE"
+      for SKIP_NS in $SKIP_NAMESPACES; do [ "$SKIP_NS" == "$NAMESPACE" ] && continue 2; done
 
-    echo "Processing $HR_NAME"
+      # Iterate through Helm chart CRDs per namespace, fux saves helm charts with starting on namespace
+      for HR_NAME in $(echo "$HELM_CHARTS" | jq -r '.items[] | select(.metadata.name | startswith("'$NAMESPACE-'")) | .metadata.name'); do
 
-    #Get artifact path from helm chart stats
-    CHART_PATH=$(echo "$HELM_CHARTS" | jq -r '.items[] | select(.metadata.name == "'$HR_NAME'") | .status.artifact.path')
+        echo "Processing $HR_NAME"
 
-    if [ -n "$CHART_PATH" ] && [ "$CHART_PATH" != "null" ]; then
+        #Get artifact path from helm chart stats
+        CHART_PATH=$(echo "$HELM_CHARTS" | jq -r '.items[] | select(.metadata.name == "'$HR_NAME'") | .status.artifact.path')
 
-      #Chart name can be different to HR name in some cases where multiple HRs use same charts like camunda, logstash
-      CHART_NAME=$(echo "$CHART_PATH" | cut -f4 -d"/" | sed 's/\(.*\)-.*/\1/')
+        if [ -n "$CHART_PATH" ] && [ "$CHART_PATH" != "null" ]; then
 
-      curl -Ls "$ARTIFACT_URL/$CHART_PATH" -o "/tmp/$CHART_NAME.tar.gz"
-      tar -xf "/tmp/$CHART_NAME.tar.gz" -C /tmp/
+          #Chart name can be different to HR name in some cases where multiple HRs use same charts like camunda, logstash
+          CHART_NAME=$(echo "$CHART_PATH" | cut -f4 -d"/" | sed 's/\(.*\)-.*/\1/')
 
-      for DEPRECATED_CHART_NAME in $( echo "${DEPRECATION_CONFIG}" | jq -r 'keys | .[]' ); do
-        echo "checking $DEPRECATED_CHART_NAME"
-        CURRENT_VERSION=$(helm dependency ls /tmp/"$CHART_NAME" | grep "^${DEPRECATED_CHART_NAME} " |awk '{ print $2}' | sed "s/~//g" | sed 's/v//' | sed "s/\^//g")
+          curl -Ls "$ARTIFACT_URL/$CHART_PATH" -o "/tmp/$CHART_NAME.tar.gz"
+          tar -xf "/tmp/$CHART_NAME.tar.gz" -C /tmp/
 
-        # Check only if chart is present
-        if [[ -n $CURRENT_VERSION ]] ; then
-          IS_DEPRECATED=false
-          for row in $(echo "${DEPRECATION_CONFIG}" | jq -r ".$DEPRECATED_CHART_NAME | .[] | @base64" ); do
-                DEPRECATED_CHART_VERSION=$(jq_decode "$row" '.version')
-                #echo "checking $CURRENT_VERSION and $DEPRECATED_CHART_VERSION for $CHART_NAME "
-                if [ $(ver "$CURRENT_VERSION") -lt $(ver "$DEPRECATED_CHART_VERSION") ]; then
-                    IS_DEPRECATED=true
-                    WARNING_MESSAGE="*$CHART_NAME* chart on *$CLUSTER_NAME* cluster has base chart *$DEPRECATED_CHART_NAME* version *$CURRENT_VERSION* which is deprecated, please upgrade to at least *${DEPRECATED_CHART_VERSION}*"
-                    echo "$WARNING_MESSAGE"
-                    if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
-                      NOTIFICATION_ARRAY+=("$CHART_NAME")
-                      if [[ "$ENABLE_SLACK" == "true" ]]; then
-                        curl --silent -X POST \
-                            -d "payload={\"channel\": \"#${TEAM_SLACK_CHANNEL}\", \"username\": \"${CLUSTER_NAME}\", \"text\": \"${WARNING_MESSAGE}\", \"icon_emoji\": \":flux:\"}" \
-                            "$SLACK_WEBHOOK"
-                      else
-                        python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
-                      fi
+          for DEPRECATED_CHART_NAME in $( echo "${DEPRECATION_CONFIG}" | jq -r 'keys | .[]' ); do
+            echo "checking $DEPRECATED_CHART_NAME"
+            CURRENT_VERSION=$(helm dependency ls /tmp/"$CHART_NAME" | grep "^${DEPRECATED_CHART_NAME} " |awk '{ print $2}' | sed "s/~//g" | sed 's/v//' | sed "s/\^//g")
+
+            # Check only if chart is present
+            if [[ -n $CURRENT_VERSION ]] ; then
+              IS_DEPRECATED=false
+              for row in $(echo "${DEPRECATION_CONFIG}" | jq -r ".$DEPRECATED_CHART_NAME | .[] | @base64" ); do
+                    DEPRECATED_CHART_VERSION=$(jq_decode "$row" '.version')
+                    #echo "checking $CURRENT_VERSION and $DEPRECATED_CHART_VERSION for $CHART_NAME "
+                    if [ $(ver "$CURRENT_VERSION") -lt $(ver "$DEPRECATED_CHART_VERSION") ]; then
+                        IS_DEPRECATED=true
+                        WARNING_MESSAGE="*$CHART_NAME* chart on *$CLUSTER_NAME* cluster has base chart *$DEPRECATED_CHART_NAME* version *$CURRENT_VERSION* which is deprecated, please upgrade to at least *${DEPRECATED_CHART_VERSION}*"
+                        echo "$WARNING_MESSAGE"
+                        if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
+                          NOTIFICATION_ARRAY+=("$CHART_NAME")
+                            python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
+                        fi
+                        break
                     fi
-                    break
-                fi
+              done
+            fi
           done
+
+          rm -rf "/tmp/$CHART_NAME.tar.gz"
+          rm -rf /tmp/"$CHART_NAME"
+
+        else
+          CHART_NAME=$(echo "$HR_NAME"|sed "s/$NAMESPACE-//")
+            echo "$HR_NAME chart not loaded, marking as error"
+            python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
         fi
       done
-
-      rm -rf "/tmp/$CHART_NAME.tar.gz"
-      rm -rf /tmp/"$CHART_NAME"
-
-    else
-      CHART_NAME=$(echo "$HR_NAME"|sed "s/$NAMESPACE-//")
-      if [[  "$ENABLE_SLACK" != "true" ]]; then
-        echo "$HR_NAME chart not loaded, marking as error"
-        python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
-      fi
     fi
-  done
 done
