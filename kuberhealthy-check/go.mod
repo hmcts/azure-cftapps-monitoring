@@ -15,7 +15,7 @@ require (
 	google.golang.org/protobuf v1.30.0 // indirect
 	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3
-	k8s.io/client-go v0.27.3
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230601164746-7562a1006961 // indirect
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
