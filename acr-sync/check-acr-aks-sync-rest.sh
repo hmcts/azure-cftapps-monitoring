@@ -5,7 +5,7 @@ set -e
 
 aks_cluster=${1:-$CLUSTER_NAME}
 slack_webhook=${2:-$SLACK_WEBHOOK}
-slack_channel=${3:-$SLACK_CHANNEL} 
+slack_channel=${3:-$SLACK_CHANNEL}
 slack_icon=${4:-$SLACK_ICON}
 acr_max_results=${5:-$ACR_MAX_RESULTS}
 hmctsprivate_token_password=${6:-$HMCTSPRIVATE_TOKEN_PASSWORD}
@@ -77,14 +77,15 @@ do
     then
       slack_message="Warning: AKS cluster $aks_cluster is running ${repo}:${tag} instead of ${repo}:${acr_tag} ($acr_date)."      
       echo "$slack_message"
-      curl --silent -X POST \
-        -d "payload={\"channel\": \"#${slack_channel}\", \"username\": \"${aks_cluster}\", \"text\": \"${slack_message}\", \"icon_emoji\": \":${slack_icon}:\"}" \
-        "$slack_webhook"
       team_slack_channel=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns} |jp -u 'metadata.labels.slackChannel')
       if [[ "$team_slack_channel" != "null" ]]
       then
         curl --silent -X POST \
           -d "payload={\"channel\": \"#${team_slack_channel}\", \"username\": \"${aks_cluster}\", \"text\": \"${slack_message}\", \"icon_emoji\": \":${slack_icon}:\"}" \
+          "$slack_webhook"
+      else
+        curl --silent -X POST \
+          -d "payload={\"channel\": \"#${slack_channel}\", \"username\": \"${aks_cluster}\", \"text\": \"${slack_message}\", \"icon_emoji\": \":${slack_icon}:\"}" \
           "$slack_webhook"
       fi
     fi
