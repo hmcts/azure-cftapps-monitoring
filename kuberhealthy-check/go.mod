@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.5
 
 require (
-	github.com/Comcast/kuberhealthy/v2 v2.2.0
+	github.com/Comcast/kuberhealthy/v2 v2.7.1
 	github.com/sirupsen/logrus v1.9.3
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
