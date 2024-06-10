@@ -1,21 +1,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: helm-chart-base-versions
+  name: failed-deployments
   namespace: monitoring
   labels:
-    app: helm-chart-base-versions
+    app: failed-deployments
 spec:
   template:
     metadata:
       labels:
-        app: helm-chart-base-versions
+        app: failed-deployments
     spec:
         restartPolicy: Never
-        serviceAccountName: helm-chart-base-versions-sa
+        serviceAccountName: failed-deployments-sa
         containers:
-        - name: helm-chart-base-versions
-          image: hmctspublic.azurecr.io/helm-base-versions:latest
+        - name: failed-deployments
+          image: hmctspublic.azurecr.io/failed-deployments:latest
           imagePullPolicy: Always
           env:
             - name: CLUSTER_NAME
@@ -23,12 +23,12 @@ spec:
             - name: COSMOS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: helm-base-versions
+                  name: failed-deployments
                   key: cosmos-key
             - name: SLACK_WEBHOOK
               valueFrom:
                 secretKeyRef:
-                  name: helm-base-versions
+                  name: failed-deployments
                   key: slack-webhook
             - name: ARTIFACT_URL
               value: "http://source-controller.flux-system.svc.cluster.local."
@@ -40,7 +40,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: helm-chart-base-versions-sa
+  name: failed-deployments-sa
   namespace: monitoring
 
 ---
@@ -48,21 +48,21 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: helm-chart-base-versions-clusterrolebinding
+  name: failed-deployments-clusterrolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: helm-chart-base-versions-clusterrole
+  name: failed-deployments-clusterrole
 subjects:
   - kind: ServiceAccount
-    name: helm-chart-base-versions-sa
+    name: failed-deployments-sa
     namespace: monitoring
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: helm-chart-base-versions-clusterrole
+  name: failed-deployments-clusterrole
 rules:
   - apiGroups: ['']
     resources: ['namespaces']
