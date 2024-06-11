@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: failed-deployments
+  namespace: monitoring
+  labels:
+    app: failed-deployments
+spec:
+  template:
+    metadata:
+      labels:
+        app: failed-deployments
+    spec:
+        restartPolicy: Never
+        serviceAccountName: failed-deployments-sa
+        containers:
+        - name: failed-deployments
+          image: hmctspublic.azurecr.io/failed-deployments:latest
+          imagePullPolicy: Always
+          env:
+            - name: CLUSTER_NAME
+              value: "cft-00-aks"
+            - name: COSMOS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: failed-deployments
+                  key: cosmos-key
+            - name: SLACK_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: failed-deployments
+                  key: slack-webhook
+            - name: ARTIFACT_URL
+              value: "http://source-controller.flux-system.svc.cluster.local."
+            - name: API_SERVER_URL
+              value: "https://kubernetes.default.svc.cluster.local"
+  backoffLimit: 1
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: failed-deployments-sa
+  namespace: monitoring
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: failed-deployments-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: failed-deployments-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: failed-deployments-sa
+    namespace: monitoring
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: failed-deployments-clusterrole
+rules:
+  - apiGroups: ['']
+    resources: ['namespaces']
+    verbs: ['list', 'get']
+  - apiGroups: ['source.toolkit.fluxcd.io']
+    resources: ['helmcharts']
+    verbs: ['list', 'get']
