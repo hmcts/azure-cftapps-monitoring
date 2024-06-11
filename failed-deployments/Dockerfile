@@ -2,6 +2,10 @@ FROM alpine:3.18.5
 
 RUN apk add curl coreutils yq jq openssl uuidgen bash helm
 
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/
+
 COPY failed-deployments.sh /
 COPY send-json-to-cosmos.py /
 COPY send-notification-to-slack.py /
