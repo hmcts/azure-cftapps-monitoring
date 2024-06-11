@@ -53,3 +53,5 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64'); do
         fi
     done <<<"$DEPLOYMENTS"
 done
+
+python3 send-slack-alerts.py "$COSMOS_KEY" "$SLACK_WEBHOOK"
