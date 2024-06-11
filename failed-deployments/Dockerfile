@@ -1,6 +1,6 @@
 FROM alpine:3.18.5
 
-RUN apk add curl coreutils yq jq openssl uuidgen bash helm
+RUN apk add curl coreutils yq jq openssl uuidgen bash helm kubectl
 
 COPY failed-deployments.sh /
 COPY send-json-to-cosmos.py /
