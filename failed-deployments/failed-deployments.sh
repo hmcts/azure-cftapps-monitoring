@@ -29,7 +29,7 @@ log_failed_deployment_to_cosmos() {
     local slack_channel=$7
     local slack_webhook=$8
 
-    python3 send-failed-deployment-to-cosmos.py "$cosmos_key" "$cluster_name" "$namespace" "$deployment_name" "$ready_replicas" "$desired_replicas" "$slack_channel" "$slack_webhook"
+    python3 send-json-to-cosmos.py "$cosmos_key" "$cluster_name" "$namespace" "$deployment_name" "$ready_replicas" "$desired_replicas" "$slack_channel" "$slack_webhook"
 }
 
 # Iterate through all namespaces
