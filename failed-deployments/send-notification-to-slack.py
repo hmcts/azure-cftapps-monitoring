@@ -1,16 +1,20 @@
-import datetime
 import sys
+import uuid
 import requests
-from azure.cosmos import CosmosClient, PartitionKey
+from azure.cosmos import CosmosClient
 
 # Get the command-line arguments
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
-cosmos_container = "app-helm-chart-metrics"
+cosmos_container = "failed-deployments"
 cosmos_key = sys.argv[1]
-slack_webhook = sys.argv[2]
+cluster_name = sys.argv[2]
 namespace = sys.argv[3]
-slack_channel = sys.argv[4]
+deployment_name = sys.argv[4]
+ready_replicas = sys.argv[5]
+desired_replicas = sys.argv[6]
+slack_channel = sys.argv[7]
+slack_webhook = sys.argv[8]
 
 # Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
@@ -18,46 +22,36 @@ client = CosmosClient(endpoint, cosmos_key)
 database = client.get_database_client(cosmos_db)
 container = database.get_container_client(cosmos_container)
 
-midnight = datetime.datetime.now(datetime.timezone.utc).replace(hour = 0, minute = 0, second = 0, microsecond = 0)
+# Create a document to store in Cosmos DB
+doc_id = str(uuid.uuid4())
+document = {
+    "id": doc_id,
+    "deploymentName": deployment_name,
+    "namespace": namespace,
+    "clusterName": cluster_name,
+    "readyReplicas": ready_replicas,
+    "desiredReplicas": desired_replicas,
+    "isFailed": True,
+    "slackChannel": slack_channel
+}
+container.create_item(body=document)
 
-# enable_cross_partition_query should be set to True as the container is partitioned
-items = list(container.query_items(
-    query="SELECT distinct c.clusterName, c.chartName, c.baseChart, c.baseChartVersion "
-          "FROM c where c.isDeprecated='true' and c._ts >@timestamp and c.namespace=@ns",
-    parameters=[
-        { "name":"@ns", "value": namespace },
-        { "name":"@timestamp", "value": midnight.timestamp() }
-    ],
-    enable_cross_partition_query=True
-))
+print(f"Document {document} created successfully in Cosmos DB")
 
-chartsMap = {}
-for item in items:
-    t = chartsMap.setdefault(item['chartName'], [])
-    t.append(item)
+# Send a message to Slack
+slack_message = (
+    f"> :red_circle: Deployment `{deployment_name}` in namespace `{namespace}` on cluster `{cluster_name}` "
+    f"has failed. Ready replicas: `{ready_replicas}`, Desired replicas: `{desired_replicas}`."
+)
+payload = {
+    "channel": slack_channel,
+    "username": "Deployment Monitor",
+    "text": slack_message,
+    "icon_emoji": ":flux:",
+}
+response = requests.post(slack_webhook, json=payload)
 
-bullet_delimiter = "\n> :red: "
-for chartName in chartsMap:
-    baseChart = chartsMap[chartName][0]["baseChart"]
-    baseChartVersion = chartsMap[chartName][0]["baseChartVersion"]
-    if baseChart == "":
-        slackMessage = f">*{chartName}* chart has invalid configuration on the below clusters," \
-                       f" please fix the configuration:\n>"
-    else:
-        slackMessage = f">*{chartName}* chart is using a deprecated chart *{baseChart}* version *{baseChartVersion}*" \
-                       f" on the below clusters, please upgrade to the <https://github.com/hmcts/chart-{baseChart}/releases|latest release>:\n>"
-    clusters = []
-    for deprecation in chartsMap[chartName]:
-        clusters.append(deprecation["clusterName"])
-    slackMessage += bullet_delimiter
-    slackMessage += bullet_delimiter.join(clusters)
-    print(slackMessage)
-    payload = {
-        "channel": slack_channel,
-        "username": "Helm Deprecation",
-        "text": slackMessage,
-        "icon_emoji": ":flux:",
-    }
-    requests.post(slack_webhook, json=payload)
-
-
+if response.status_code == 200:
+    print("Message posted successfully to Slack")
+else:
+    print(f"Failed to post message to Slack: {response.status_code}, {response.text}")
