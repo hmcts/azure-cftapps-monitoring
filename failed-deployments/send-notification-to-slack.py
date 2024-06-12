@@ -33,8 +33,12 @@ items = list(container.query_items(
     enable_cross_partition_query=True
 ))
 
+logging.info(f"Query returned {len(items)} items.")
+print("Go to after query items")
+
 # Create a map of failed deployments by namespace and Slack channel
-failed_deployments = {}
+failed_deployments_list = []
+failed_deployments= {}
 for item in items:
     channel = item['slackChannel']
     namespace = item['namespace']
@@ -43,6 +47,9 @@ for item in items:
     if namespace not in failed_deployments[channel]:
         failed_deployments[channel][namespace] = []
     failed_deployments[channel][namespace].append(item)
+    failed_deployments_list.append(failed_deployments)
+    
+print("Have made it past failed_deployments map")
 
 # Send notifications to Slack
 for channel, namespaces in failed_deployments.items():
