@@ -1,4 +1,3 @@
-# send-slack-alerts.py
 import datetime
 import sys
 import requests
@@ -6,7 +5,7 @@ import logging
 from azure.cosmos import CosmosClient
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Get the command-line arguments
 cosmos_account = "pipeline-metrics"
@@ -34,12 +33,11 @@ items = list(container.query_items(
 ))
 
 logging.info(f"Query returned {len(items)} items.")
-print("Go to after query items")
 
 # Create a map of failed deployments by namespace and Slack channel
-failed_deployments_list = []
-failed_deployments= {}
+failed_deployments = {}
 for item in items:
+    logging.debug(f"Processing item: {item}")
     channel = item['slackChannel']
     namespace = item['namespace']
     if channel not in failed_deployments:
@@ -47,9 +45,8 @@ for item in items:
     if namespace not in failed_deployments[channel]:
         failed_deployments[channel][namespace] = []
     failed_deployments[channel][namespace].append(item)
-    failed_deployments_list.append(failed_deployments)
-    
-print("Have made it past failed_deployments map")
+
+logging.debug(f"Failed deployments grouped by channel and namespace: {failed_deployments}")
 
 # Send notifications to Slack
 for channel, namespaces in failed_deployments.items():
@@ -63,12 +60,12 @@ for channel, namespaces in failed_deployments.items():
             "text": slack_message,
             "icon_emoji": ":flux:",
         }
-        
+
         logging.info(f"Sending Slack message to channel {channel} for namespace {namespace}")
         logging.debug(f"Slack message payload: {payload}")
-        
+
         response = requests.post(slack_webhook, json=payload)
-        
+
         if response.status_code == 200:
             logging.info(f"Slack message sent successfully to channel {channel} for namespace {namespace}")
         else:
