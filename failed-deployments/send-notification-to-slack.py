@@ -20,19 +20,24 @@ client = CosmosClient(endpoint, cosmos_key)
 database = client.get_database_client(cosmos_db)
 container = database.get_container_client(cosmos_container)
 
+# Calculate midnight time in epoch seconds
 midnight = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+midnight_epoch = int(midnight.timestamp())
+logging.debug(f"Querying for items with _ts greater than {midnight_epoch}")
 
 # Query Cosmos DB for failed deployments since midnight
 items = list(container.query_items(
     query="SELECT c.clusterName, c.namespace, c.deploymentName, c.readyReplicas, c.desiredReplicas, c.slackChannel "
-          "FROM c WHERE c.timestamp > @timestamp",
+          "FROM c WHERE c._ts > @timestamp",
     parameters=[
-        {"name": "@timestamp", "value": midnight.isoformat()}
+        {"name": "@timestamp", "value": midnight_epoch}
     ],
     enable_cross_partition_query=True
 ))
 
 logging.info(f"Query returned {len(items)} items.")
+for item in items:
+    logging.debug(f"Item: {item}")
 
 # Create a map of failed deployments by namespace and Slack channel
 failed_deployments = {}
