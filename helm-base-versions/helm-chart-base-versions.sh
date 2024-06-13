@@ -60,7 +60,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
             # Check only if chart is present
             if [[ -n $CURRENT_VERSION ]] ; then
               IS_DEPRECATED=false
-              for row in $(echo "${DEPRECATION_CONFIG}" | jq -r ".$DEPRECATED_CHART_NAME | .[] | @base64" ); do
+              for row in $(echo "${DEPRECATION_CONFIG}" | jq -r ".$DEPRECATED_CHART_NAME | @base64" ); do
                     DEPRECATED_CHART_VERSION=$(jq_decode "$row" '.version')
                     #echo "checking $CURRENT_VERSION and $DEPRECATED_CHART_VERSION for $CHART_NAME "
                     if [ $(ver "$CURRENT_VERSION") -lt $(ver "$DEPRECATED_CHART_VERSION") ]; then
