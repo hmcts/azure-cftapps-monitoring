@@ -11,7 +11,7 @@ SLACK_WEBHOOK=${5:-$SLACK_WEBHOOK}
 MODE=${6:-$MODE}
 
 
-DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-jenkins-config/master/deprecation-config.yml | yq e '.helm' -o=json)
+DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-deprecation-map/master/nagger-versions.yaml | yq e '.helm' -o=json)
 SA_TOKEN=$(cat /run/secrets/kubernetes.io/serviceaccount/token)
 [[ "$SA_TOKEN" == "" ]] && echo "Error: cannot get service account token." && exit 1
 
@@ -60,7 +60,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
             # Check only if chart is present
             if [[ -n $CURRENT_VERSION ]] ; then
               IS_DEPRECATED=false
-              for row in $(echo "${DEPRECATION_CONFIG}" | jq -r ".$DEPRECATED_CHART_NAME | .[] | @base64" ); do
+              for row in $(echo "${DEPRECATION_CONFIG}" | jq -r ".$DEPRECATED_CHART_NAME | @base64" ); do
                     DEPRECATED_CHART_VERSION=$(jq_decode "$row" '.version')
                     #echo "checking $CURRENT_VERSION and $DEPRECATED_CHART_VERSION for $CHART_NAME "
                     if [ $(ver "$CURRENT_VERSION") -lt $(ver "$DEPRECATED_CHART_VERSION") ]; then
