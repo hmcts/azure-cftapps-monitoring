@@ -11,7 +11,7 @@ SLACK_WEBHOOK=${5:-$SLACK_WEBHOOK}
 MODE=${6:-$MODE}
 
 
-DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-jenkins-config/master/deprecation-config.yml | yq e '.helm' -o=json)
+DEPRECATION_CONFIG=$(curl -s https://raw.githubusercontent.com/hmcts/cnp-deprecation-map/master/nagger-versions.yaml | yq e '.helm' -o=json)
 SA_TOKEN=$(cat /run/secrets/kubernetes.io/serviceaccount/token)
 [[ "$SA_TOKEN" == "" ]] && echo "Error: cannot get service account token." && exit 1
 
