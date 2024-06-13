@@ -5,9 +5,9 @@ go 1.22.2
 require (
 	github.com/Comcast/kuberhealthy/v2 v2.2.0
 	github.com/sirupsen/logrus v1.9.3
-	k8s.io/api v0.30.1
-	k8s.io/apimachinery v0.30.1
-	k8s.io/client-go v0.30.1
+	k8s.io/api v0.30.2
+	k8s.io/apimachinery v0.30.2
+	k8s.io/client-go v0.30.2
 )
 
 require (
