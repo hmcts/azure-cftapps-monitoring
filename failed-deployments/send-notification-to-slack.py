@@ -58,10 +58,10 @@ for channel, namespaces in failed_deployments.items():
     for namespace, deployments in namespaces.items():
         slack_message = f":warning: *Failed Deployments Detected in Namespace {namespace}*\n"
         for deployment in deployments:
-            slack_message += f"> :fail: Cluster: {deployment['clusterName']}, Deployment: {deployment['deploymentName']}, Ready Replicas: {deployment['readyReplicas']}, Desired Replicas: {deployment['desiredReplicas']}\n"
+            slack_message += f"> :red: Deployment: *{deployment['deploymentName']}* has failed on *{deployment['clusterName']}*\n"
         payload = {
             "channel": channel,
-            "username": "Deployment Monitor",
+            "username": "Failed Deployments",
             "text": slack_message,
             "icon_emoji": ":flux:",
         }
