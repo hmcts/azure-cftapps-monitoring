@@ -16,7 +16,7 @@ NAMESPACES=$(curl -k -s -H "Authorization: Bearer $SA_TOKEN" "$API_SERVER_URL"/a
 
 function jq_decode() { echo "${1}" | base64 --decode | jq -r "${2}"; }
 
-SKIP_NAMESPACES="admin default kube-node-lease kube-public kube-system neuvector monitoring aac adoption am bar bsp camunda ccd civil cnp cpo cui dg disposer divorce dm-store docmosis dtsse dynatrace et ethos fact family-public-law fees-pay finacial-remedy fis help-with-fees hmc ia idam jps lau money-claims nfdiv pcq private-law probate rd rpts sptribs sscs tax-tribunals ts wa xui"
+SKIP_NAMESPACES="admin azureserviceoperator-system cert-manager default flux-system kube-node-lease kube-public kube-system labs neuvector monitoring prometheus"
 
 # Function to log failed deployment to Cosmos DB
 log_failed_deployment_to_cosmos() {
