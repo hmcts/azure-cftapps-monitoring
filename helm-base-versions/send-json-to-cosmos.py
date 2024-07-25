@@ -7,7 +7,6 @@ from azure.identity import DefaultAzureCredential
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "app-helm-chart-metrics"
-cosmos_key = sys.argv[1]
 chart_name = sys.argv[2]
 namespace = sys.argv[3]
 cluster_name = sys.argv[4]

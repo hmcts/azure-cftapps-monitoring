@@ -6,7 +6,6 @@ set -e
 CLUSTER_NAME=${1:-$CLUSTER_NAME}
 ARTIFACT_URL=${2:-$ARTIFACT_URL}
 API_SERVER_URL=${3:-$API_SERVER_URL}
-COSMOS_KEY=${4:-$COSMOS_KEY}
 SLACK_WEBHOOK=${5:-$SLACK_WEBHOOK}
 MODE=${6:-$MODE}
 
@@ -31,7 +30,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     NOTIFICATION_ARRAY=()
 
     if [[ $MODE == "notify" ]]; then
-      python3 send-notification-to-slack.py "$COSMOS_KEY" "$SLACK_WEBHOOK" "$NAMESPACE" "$TEAM_SLACK_CHANNEL"
+      python3 send-notification-to-slack.py "$SLACK_WEBHOOK" "$NAMESPACE" "$TEAM_SLACK_CHANNEL"
     else
 
       echo "processing $NAMESPACE"
@@ -69,7 +68,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                         echo "$WARNING_MESSAGE"
                         if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
                           NOTIFICATION_ARRAY+=("$CHART_NAME")
-                            python3  send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
+                            python3  send-json-to-cosmos.py "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
                         fi
                         break
                     fi
@@ -83,7 +82,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
         else
           CHART_NAME=$(echo "$HR_NAME"|sed "s/$NAMESPACE-//")
             echo "$HR_NAME chart not loaded, marking as error"
-            python3 send-json-to-cosmos.py $COSMOS_KEY "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
+            python3 send-json-to-cosmos.py "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
         fi
       done
     fi
