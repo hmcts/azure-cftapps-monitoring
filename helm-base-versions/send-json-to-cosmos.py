@@ -7,13 +7,13 @@ from azure.identity import DefaultAzureCredential
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "app-helm-chart-metrics"
-chart_name = sys.argv[2]
-namespace = sys.argv[3]
-cluster_name = sys.argv[4]
-deprecated_chart_name = sys.argv[5]
-current_version = sys.argv[6]
-is_deprecated = sys.argv[7]
-is_error = sys.argv[8]
+chart_name = sys.argv[1]
+namespace = sys.argv[2]
+cluster_name = sys.argv[3]
+deprecated_chart_name = sys.argv[4]
+current_version = sys.argv[5]
+is_deprecated = sys.argv[6]
+is_error = sys.argv[7]
 
 # Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"

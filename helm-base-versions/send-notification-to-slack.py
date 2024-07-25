@@ -8,9 +8,9 @@ from azure.identity import DefaultAzureCredential
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "app-helm-chart-metrics"
-slack_webhook = sys.argv[2]
-namespace = sys.argv[3]
-slack_channel = sys.argv[4]
+slack_webhook = sys.argv[1]
+namespace = sys.argv[2]
+slack_channel = sys.argv[3]
 
 # Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
