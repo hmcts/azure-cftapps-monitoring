@@ -30,7 +30,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     NOTIFICATION_ARRAY=()
 
     if [[ $MODE == "notify" ]]; then
-      python3 send-notification-to-slack.py -slack_webhook "$SLACK_WEBHOOK" -namespace "$NAMESPACE" -slack_channel "$TEAM_SLACK_CHANNEL"
+      python3 send-notification-to-slack.py --slack_webhook "$SLACK_WEBHOOK" --namespace "$NAMESPACE" --slack_channel "$TEAM_SLACK_CHANNEL"
     else
 
       echo "processing $NAMESPACE"
