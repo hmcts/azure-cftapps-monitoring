@@ -8,6 +8,7 @@ COPY send-notification-to-slack.py /
 
 RUN apk update && \
     apk add python3 py3-pip && \
-    pip3 install azure-cosmos
+    pip3 install azure-cosmos azure-identity
+
 
 CMD ["/helm-chart-base-versions.sh"]
