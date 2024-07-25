@@ -30,7 +30,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
     NOTIFICATION_ARRAY=()
 
     if [[ $MODE == "notify" ]]; then
-      python3 send-notification-to-slack.py "$SLACK_WEBHOOK" "$NAMESPACE" "$TEAM_SLACK_CHANNEL"
+      python3 send-notification-to-slack.py -slack_webhook "$SLACK_WEBHOOK" -namespace "$NAMESPACE" -slack_channel "$TEAM_SLACK_CHANNEL"
     else
 
       echo "processing $NAMESPACE"
@@ -68,8 +68,8 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                         echo "$WARNING_MESSAGE"
                         if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
                           NOTIFICATION_ARRAY+=("$CHART_NAME")
-                            python3  send-json-to-cosmos.py "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "$DEPRECATED_CHART_NAME" "$CURRENT_VERSION" "$IS_DEPRECATED" false
-                        fi
+                            python3 send-json-to-cosmos.py --chart_name "$CHART_NAME" --namespace "$NAMESPACE" --cluster_name "$CLUSTER_NAME" --deprecated_chart_name "$DEPRECATED_CHART_NAME" --current_version "$CURRENT_VERSION" --is_deprecated "$IS_DEPRECATED" --flag false                        
+                          fi
                         break
                     fi
               done
