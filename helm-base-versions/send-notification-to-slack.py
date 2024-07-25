@@ -3,14 +3,25 @@ import sys
 import requests
 from azure.cosmos import CosmosClient, PartitionKey
 from azure.identity import DefaultAzureCredential
+import argparse
 
 # Get the command-line arguments
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "app-helm-chart-metrics"
-slack_webhook = sys.argv[2]
-namespace = sys.argv[3]
-slack_channel = sys.argv[4]
+
+parser = argparse.ArgumentParser(description="Script to send notifications to Slack.")
+
+parser.add_argument('--slack_webhook', type=str, required=True, help='The URL of the Slack webhook to send notifications to.')
+parser.add_argument('--namespace', type=str, required=True, help='The namespace associated with the notification.')
+parser.add_argument('--slack_channel', type=str, required=True, help='The Slack channel to post the notification to.')
+
+# Parse the arguments
+args = parser.parse_args()
+
+slack_webhook = args.slack_webhook
+namespace = args.namespace
+slack_channel = args.slack_channel
 
 # Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
