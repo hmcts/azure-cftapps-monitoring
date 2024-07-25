@@ -10,7 +10,7 @@ cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "app-helm-chart-metrics"
 
-parser = argparse.ArgumentParser(description="Process some integers.")
+parser = argparse.ArgumentParser(description="Script to send notifications to Slack.")
 
 parser.add_argument('--slack_webhook', type=str, required=True, help='The URL of the Slack webhook to send notifications to.')
 parser.add_argument('--namespace', type=str, required=True, help='The namespace associated with the notification.')

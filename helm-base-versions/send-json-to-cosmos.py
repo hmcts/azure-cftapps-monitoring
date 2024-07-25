@@ -9,7 +9,7 @@ cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "app-helm-chart-metrics"
 
-parser = argparse.ArgumentParser(description="Process some integers.")
+parser = argparse.ArgumentParser(description="Script to send JSON data to Cosmos DB.")
 
 parser.add_argument('--chart_name', type=str, required=True, help='The chart name')
 parser.add_argument('--namespace', type=str, required=True, help='The namespace')
