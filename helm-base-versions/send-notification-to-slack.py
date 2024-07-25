@@ -8,7 +8,6 @@ from azure.identity import DefaultAzureCredential
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "app-helm-chart-metrics"
-cosmos_key = sys.argv[1]
 slack_webhook = sys.argv[2]
 namespace = sys.argv[3]
 slack_channel = sys.argv[4]

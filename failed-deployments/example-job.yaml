@@ -20,11 +20,6 @@ spec:
           env:
             - name: CLUSTER_NAME
               value: "cft-00-aks"
-            - name: COSMOS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: failed-deployments
-                  key: cosmos-key
             - name: SLACK_WEBHOOK
               valueFrom:
                 secretKeyRef:
