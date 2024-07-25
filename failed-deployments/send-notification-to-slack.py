@@ -3,7 +3,6 @@ import sys
 import requests
 import logging
 from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -12,12 +11,12 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "failed-deployments"
+cosmos_key = sys.argv[1]
 slack_webhook = sys.argv[2]
 
 # Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
-credential = DefaultAzureCredential()
-client = CosmosClient(endpoint, credential=credential)
+client = CosmosClient(endpoint, cosmos_key)
 database = client.get_database_client(cosmos_db)
 container = database.get_container_client(cosmos_container)
 
