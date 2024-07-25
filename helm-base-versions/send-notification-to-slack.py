@@ -2,6 +2,7 @@ import datetime
 import sys
 import requests
 from azure.cosmos import CosmosClient, PartitionKey
+from azure.identity import DefaultAzureCredential
 
 # Get the command-line arguments
 cosmos_account = "pipeline-metrics"
@@ -14,7 +15,8 @@ slack_channel = sys.argv[4]
 
 # Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
-client = CosmosClient(endpoint, cosmos_key)
+credential = DefaultAzureCredential()
+client = CosmosClient(endpoint, credential=credential)
 database = client.get_database_client(cosmos_db)
 container = database.get_container_client(cosmos_container)
 
