@@ -6,6 +6,7 @@ from azure.identity import DefaultAzureCredential
 import argparse
 
 # Environment variables for Cosmos DB configuration
+endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
 cosmos_account = os.environ.get("COSMOS_ACCOUNT", "pipeline-metrics")
 cosmos_db = os.environ.get("COSMOS_DB", "platform-metrics")
 cosmos_container = os.environ.get("COSMOS_CONTAINER", "app-helm-chart-metrics")
@@ -35,7 +36,6 @@ flag = args.flag
 is_error = args.is_error
 
 # Cosmos DB endpoint and client setup
-endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
 credential = DefaultAzureCredential()
 client = CosmosClient(endpoint, credential=credential)
 database = client.get_database_client(cosmos_db)

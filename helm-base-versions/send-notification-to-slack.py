@@ -28,8 +28,8 @@ slack_channel = args.slack_channel
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
 credential = DefaultAzureCredential()
 client = CosmosClient(endpoint, credential=credential)
-database = client.get_database(cosmos_db)
-container = database.get_container(cosmos_container)
+database = client.get_database_client(cosmos_db)
+db_container = database.get_container_client(cosmos_container)
 
 midnight = datetime.datetime.now(datetime.timezone.utc).replace(hour = 0, minute = 0, second = 0, microsecond = 0)
 
