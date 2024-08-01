@@ -11,7 +11,6 @@ cosmos_account = os.environ.get("COSMOS_ACCOUNT", "pipeline-metrics")
 cosmos_db = os.environ.get("COSMOS_DB", "platform-metrics")
 cosmos_container = os.environ.get("COSMOS_CONTAINER", "app-helm-chart-metrics")
 
-
 parser = argparse.ArgumentParser(description="Script to send notifications to Slack.")
 
 parser.add_argument('--slack_webhook', type=str, required=True, help='The URL of the Slack webhook to send notifications to.')
