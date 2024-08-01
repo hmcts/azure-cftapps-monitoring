@@ -10,8 +10,6 @@ RUN apk update && \
     apk add python3 py3-pip && \
     pip3 install azure-cosmos azure-identity
 
-WORKDIR /app
-
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
 
