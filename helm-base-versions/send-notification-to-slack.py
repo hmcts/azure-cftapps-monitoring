@@ -1,4 +1,5 @@
 import datetime
+import os
 import sys
 import requests
 from azure.cosmos import CosmosClient, PartitionKey
@@ -6,9 +7,10 @@ from azure.identity import DefaultAzureCredential
 import argparse
 
 # Get the command-line arguments
-cosmos_account = "pipeline-metrics"
-cosmos_db = "platform-metrics"
-cosmos_container = "app-helm-chart-metrics"
+cosmos_account = os.environ.get("COSMOS_ACCOUNT", "pipeline-metrics")
+cosmos_db = os.environ.get("COSMOS_DB", "platform-metrics")
+cosmos_container = os.environ.get("COSMOS_CONTAINER", "app-helm-chart-metrics")
+
 
 parser = argparse.ArgumentParser(description="Script to send notifications to Slack.")
 
@@ -27,8 +29,8 @@ slack_channel = args.slack_channel
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
 credential = DefaultAzureCredential()
 client = CosmosClient(endpoint, credential=credential)
-database = client.get_database_client(cosmos_db)
-container = database.get_container_client(cosmos_container)
+database = client.get_database(cosmos_db)
+container = database.get_container(cosmos_container)
 
 midnight = datetime.datetime.now(datetime.timezone.utc).replace(hour = 0, minute = 0, second = 0, microsecond = 0)
 
