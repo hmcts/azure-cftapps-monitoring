@@ -22,6 +22,4 @@ ENV COSMOS_ACCOUNT="pipeline-metrics" \
     COSMOS_CONTAINER="app-helm-chart-metrics" \
     COSMOS_DB_URI=""
 
-RUN chmod +x /app/set_env.sh
-
 CMD ["/app/entrypoint.sh"]
