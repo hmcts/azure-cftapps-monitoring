@@ -22,4 +22,4 @@ ENV COSMOS_ACCOUNT="pipeline-metrics" \
     COSMOS_CONTAINER="app-helm-chart-metrics" \
     COSMOS_DB_URI=""
 
-CMD ["/app/entrypoint.sh"]
+CMD ["/helm-chart-base-versions.sh"]
