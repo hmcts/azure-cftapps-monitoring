@@ -1,5 +1,7 @@
 FROM alpine:3.18.5
 
+ENV PIP_BREAK_SYSTEM_PACKAGES 1
+
 RUN apk add curl coreutils yq jq openssl uuidgen bash helm
 
 COPY helm-chart-base-versions.sh /
