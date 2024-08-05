@@ -23,14 +23,14 @@ parser.add_argument('--isError', action='store_true', help='A boolean flag indic
 # Parse the arguments
 args = parser.parse_args()
 
-chart_name = args.chart_name
+chart_name = args.chartName
 namespace = args.namespace
-cluster_name = args.cluster_name
-deprecated_chart_name = args.deprecated_chart_name
-current_version = args.current_version
-is_deprecated = args.is_deprecated
+cluster_name = args.clusterName
+deprecated_chart_name = args.deprecatedChartName
+current_version = args.currentVersion
+is_deprecated = args.isDeprecated
 flag = args.flag
-is_error = args.is_error
+is_error = args.isError
 
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
 credential = DefaultAzureCredential()
@@ -51,4 +51,4 @@ document = {
 }
 container.create_item(body=document)
 
-print(document ," created successfully in Cosmos")
+print(document, "created successfully in Cosmos")
