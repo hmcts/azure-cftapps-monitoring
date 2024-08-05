@@ -68,7 +68,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                         echo "$WARNING_MESSAGE"
                         if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
                           NOTIFICATION_ARRAY+=("$CHART_NAME")
-                            python3 send-json-to-cosmos.py --chart_name "$CHART_NAME" --namespace "$NAMESPACE" --cluster_name "$CLUSTER_NAME" --deprecated_chart_name "$DEPRECATED_CHART_NAME" --current_version "$CURRENT_VERSION" --is_deprecated "$IS_DEPRECATED" --flag false                        
+                            python3 send-json-to-cosmos.py --chartName "$CHART_NAME" --namespace "$NAMESPACE" --clusterName "$CLUSTER_NAME" --deprecatedChartName "$DEPRECATED_CHART_NAME" --currentVersion "$CURRENT_VERSION" --isDeprecated true --flag true                    
                           fi
                         break
                     fi
@@ -82,7 +82,7 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
         else
           CHART_NAME=$(echo "$HR_NAME"|sed "s/$NAMESPACE-//")
             echo "$HR_NAME chart not loaded, marking as error"
-            python3 send-json-to-cosmos.py "$CHART_NAME" "$NAMESPACE" "$CLUSTER_NAME" "" "" true true
+            python3 send-json-to-cosmos.py --chartName "$CHART_NAME" --namespace "$NAMESPACE" --clusterName "$CLUSTER_NAME" --deprecatedChartName "$DEPRECATED_CHART_NAME" --currentVersion "$CURRENT_VERSION" --isDeprecated true --flag true --isError true
         fi
       done
     fi

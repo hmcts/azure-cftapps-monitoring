@@ -11,26 +11,26 @@ cosmos_container = "app-helm-chart-metrics"
 
 parser = argparse.ArgumentParser(description="Script to send JSON data to Cosmos DB.")
 
-parser.add_argument('--chart_name', type=str, required=True, help='The chart name')
+parser.add_argument('--chartName', type=str, required=True, help='The chart name')
 parser.add_argument('--namespace', type=str, required=True, help='The namespace')
-parser.add_argument('--cluster_name', type=str, required=True, help='The cluster name')
-parser.add_argument('--deprecated_chart_name', type=str, required=True, help='The deprecated chart name')
-parser.add_argument('--current_version', type=str, required=True, help='The current version of the chart')
-parser.add_argument('--is_deprecated', type=str, required=True, help='Deprecation status')
+parser.add_argument('--clusterName', type=str, required=True, help='The cluster name')
+parser.add_argument('--deprecatedChartName', type=str, required=True, help='The deprecated chart name')
+parser.add_argument('--currentVersion', type=str, required=True, help='The current version of the chart')
+parser.add_argument('--isDeprecated', type=str, required=True, help='Deprecation status')
 parser.add_argument('--flag', type=str, required=True, help='A boolean flag')
-parser.add_argument('--is_error', action='store_true', help='A boolean flag indicating an error')
+parser.add_argument('--isError', action='store_true', help='A boolean flag indicating an error')
 
 # Parse the arguments
 args = parser.parse_args()
 
-chart_name = args.chart_name
+chart_name = args.chartName
 namespace = args.namespace
-cluster_name = args.cluster_name
-deprecated_chart_name = args.deprecated_chart_name
-current_version = args.current_version
-is_deprecated = args.is_deprecated
+cluster_name = args.clusterName
+deprecated_chart_name = args.deprecatedChartName
+current_version = args.currentVersion
+is_deprecated = args.isDeprecated
 flag = args.flag
-is_error = args.is_error
+is_error = args.isError
 
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
 credential = DefaultAzureCredential()
@@ -51,4 +51,4 @@ document = {
 }
 container.create_item(body=document)
 
-print(document ," created successfully in Cosmos")
+print(document, "created successfully in Cosmos")
