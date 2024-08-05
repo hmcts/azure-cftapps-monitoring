@@ -1,5 +1,7 @@
 FROM alpine:3.18.5
 
+ENV PIP_BREAK_SYSTEM_PACKAGES 1
+
 RUN apk add curl coreutils yq jq openssl uuidgen bash helm
 
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
