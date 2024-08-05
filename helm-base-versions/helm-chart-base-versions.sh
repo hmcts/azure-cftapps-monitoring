@@ -68,7 +68,8 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64' ); do
                         echo "$WARNING_MESSAGE"
                         if [[ ! " ${NOTIFICATION_ARRAY[*]} " =~ ${CHART_NAME} ]]; then
                           NOTIFICATION_ARRAY+=("$CHART_NAME")
-                            python3 send-json-to-cosmos.py --chart_name "$CHART_NAME" --namespace "$NAMESPACE" --cluster_name "$CLUSTER_NAME" --deprecated_chart_name "" --current_version "" --is_deprecated true --flag true                          fi
+                            python3 send-json-to-cosmos.py --chart_name "$CHART_NAME" --namespace "$NAMESPACE" --cluster_name "$CLUSTER_NAME" --deprecated_chart_name "" --current_version "" --is_deprecated true --flag true                       
+                          fi
                         break
                     fi
               done
