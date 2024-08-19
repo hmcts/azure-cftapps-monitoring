@@ -77,18 +77,17 @@ do
     then
       slack_message="Warning: AKS cluster $aks_cluster is running ${repo}:${tag} instead of ${repo}:${acr_tag} ($acr_date)."      
       echo "$slack_message"
-      team_slack_channel=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns} |jp -u 'metadata.labels.slackChannel')
+      team_slack_channel=$(curl -k -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns} | jp -u 'metadata.labels.slackChannel')
       if [[ "$team_slack_channel" != "null" ]]
       then
-        curl --silent -X POST \
+        curl -X POST \
           -d "payload={\"channel\": \"#${team_slack_channel}\", \"username\": \"${aks_cluster}\", \"text\": \"${slack_message}\", \"icon_emoji\": \":${slack_icon}:\"}" \
           "$slack_webhook"
       else
-        curl --silent -X POST \
+        curl -X POST \
           -d "payload={\"channel\": \"#${slack_channel}\", \"username\": \"${aks_cluster}\", \"text\": \"${slack_message}\", \"icon_emoji\": \":${slack_icon}:\"}" \
           "$slack_webhook"
       fi
     fi
-  
   done
 done
