@@ -13,13 +13,13 @@ hmctsprivate_token_password=${6:-$HMCTSPRIVATE_TOKEN_PASSWORD}
 skip_namespaces="admin default kube-node-lease kube-public kube-system neuvector"
 sa_token=$(cat /run/secrets/kubernetes.io/serviceaccount/token)
 [[ "$sa_token" == "" ]] && echo "Error: cannot get service account token." && exit 1
-all_namespaces=$(curl -k -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/ \
+all_namespaces=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/ \
   |jp -u 'join(`"\n"`, items[].metadata.name)')
 
 for _ns in $all_namespaces
 do
   for _skip_ns in $skip_namespaces; do [ "$_skip_ns" == "$_ns" ] && continue 2; done
-  images=$(curl -k -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns}/pods/ --insecure \
+  images=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns}/pods/ --insecure \
     | jp -u 'join(`"\n"`, items[?status.phase!=`"Succeeded"`].spec.containers[].image)' |grep 'prod-' |grep -v 'test:prod-' | sort |uniq)
   echo "** Namespace $_ns hosts $(echo $images |wc -w) unique images to check..."
   acr_token=""
@@ -41,9 +41,9 @@ do
         if  [[ ${acr} == "hmctsprivate.azurecr.io" ]] ;
         then
           acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
-          token_response=$(curl -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+          token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
         else
-          token_response=$(curl "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+          token_response=$(curl --silent "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
         fi
         [[ "$token_response" != "" ]] && break
         token_retries=$(($token_retries + 1))
@@ -54,7 +54,7 @@ do
     
     [[ "$acr_token" == "" ]] && echo "Error: cannot get acr token." && exit 1
     # get latest 'prod-' tag and timestamp for repository from acr    
-    curl -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
+    curl --silent -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $acr_token" \
       "https://${acr}/acr/v1/${repo}/_tags?n=${ACR_MAX_RESULTS}" > /tmp/acr_repo.json
     if [[ -s /tmp/acr_repo.json ]]
     then
@@ -77,7 +77,7 @@ do
     then
       slack_message="Warning: AKS cluster $aks_cluster is running ${repo}:${tag} instead of ${repo}:${acr_tag} ($acr_date)."      
       echo "$slack_message"
-      team_slack_channel=$(curl -k -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns} |jp -u 'metadata.labels.slackChannel')
+      team_slack_channel=$(curl -k -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns} | jp -u 'metadata.labels.slackChannel')
       if [[ "$team_slack_channel" != "null" ]]
       then
         curl -X POST \
@@ -89,6 +89,5 @@ do
           "$slack_webhook"
       fi
     fi
-  
   done
 done
