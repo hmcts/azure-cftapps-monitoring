@@ -1,4 +1,4 @@
-FROM alpine:3.21.0
+FROM alpine:3.21.1
 
 ENV PIP_BREAK_SYSTEM_PACKAGES 1
 
