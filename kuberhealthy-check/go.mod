@@ -2,7 +2,7 @@ module github.com/hmcts/azure-cftapps-monitoring
 
 go 1.24.0
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/Comcast/kuberhealthy/v2 v2.2.0
