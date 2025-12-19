@@ -15,7 +15,7 @@ spec:
         serviceAccountName: failed-deployments-sa
         containers:
         - name: failed-deployments
-          image: hmctspublic.azurecr.io/failed-deployments:latest
+          image: hmctsprod.azurecr.io/failed-deployments:latest
           imagePullPolicy: Always
           env:
             - name: CLUSTER_NAME

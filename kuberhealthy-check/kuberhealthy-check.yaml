@@ -16,7 +16,7 @@ spec:
             value: "flux"
           - name: TARGET_NAMESPACE
             value: "admin"
-        image: hmctspublic.azurecr.io/monitoring/kuberhealthy-check:latest
+        image: hmctsprod.azurecr.io/monitoring/kuberhealthy-check:latest
         imagePullPolicy: Always
         name: main
         resources:
