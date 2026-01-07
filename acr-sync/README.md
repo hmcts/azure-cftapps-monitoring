@@ -188,21 +188,9 @@ Provides a reasonable grace period for:
 
 Alerts only trigger when deployments are genuinely lagging, reducing false positives.
 
-## Testing
-
-A test script (`test-parsing.sh`) is provided to validate logic locally without Kubernetes:
-
-```bash
-./test-parsing.sh
-```
-
-Tests:
-- JMESPath JSON extraction
-- Parameter expansion parsing
-- Timestamp comparisons
-- Sync status detection
-
 ## Building and Deployment
+
+For changes via Git and pull requests a merge to the main branch will trigger the ACR task to run as it has source triggering enabled so the following steps are for reference only or testing purposes.
 
 ### Build Image Locally
 
