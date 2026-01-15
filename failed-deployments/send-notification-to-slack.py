@@ -2,7 +2,9 @@ import datetime
 import sys
 import requests
 import logging
-from azure.cosmos import CosmosClient
+from azure.cosmos import CosmosClient, PartitionKey
+from azure.identity import DefaultAzureCredential
+import argparse
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -11,12 +13,20 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "failed-deployments"
-cosmos_key = sys.argv[1]
-slack_webhook = sys.argv[2]
+
+parser = argparse.ArgumentParser(description="Script to send notifications to Slack.")
+
+parser.add_argument('--slack_webhook', type=str, required=True, help='The URL of the Slack webhook to send notifications to.')
+
+# Parse the arguments
+args = parser.parse_args()
+
+slack_webhook = args.slack_webhook
 
 # Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
-client = CosmosClient(endpoint, cosmos_key)
+credential = DefaultAzureCredential()
+client = CosmosClient(endpoint, credential=credential)
 database = client.get_database_client(cosmos_db)
 container = database.get_container_client(cosmos_container)
 
@@ -56,13 +66,14 @@ logging.debug(f"Failed deployments grouped by channel and namespace: {failed_dep
 # Send notifications to Slack
 for channel, namespaces in failed_deployments.items():
     for namespace, deployments in namespaces.items():
-        slack_message = f":warning: *Failed Deployments Detected in Namespace {namespace}*\n"
+        slackmessage = f":warning: *Failed Deployments Detected in Namespace {namespace}*\n"
         for deployment in deployments:
-            slack_message += f"> :red: Deployment: *{deployment['deploymentName']}* has failed on *{deployment['clusterName']}*\n"
+            slackmessage += f"> :red: Deployment: *{deployment['deploymentName']}* has failed on *{deployment['clusterName']}*\n"
+        print(slackmessage)
         payload = {
             "channel": channel,
             "username": "Failed Deployments",
-            "text": slack_message,
+            "text": slackmessage,
             "icon_emoji": ":flux:",
         }
 
