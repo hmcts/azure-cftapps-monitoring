@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
-set -e
 
 [[ "$SCRIPT_DEBUG" == "true" ]] && set -x
 
 CLUSTER_NAME=${1:-$CLUSTER_NAME}
-API_SERVER_URL=${2:-$API_SERVER_URL}
-COSMOS_KEY=${3:-$COSMOS_KEY}
+ARTIFACT_URL=${2:-$ARTIFACT_URL}
+API_SERVER_URL=${3:-$API_SERVER_URL}
 SLACK_WEBHOOK=${4:-$SLACK_WEBHOOK}
 MODE=${5:-$MODE}
+
+# Validate required environment variables
+[[ -z "$CLUSTER_NAME" ]] && echo "Error: CLUSTER_NAME is not set." && exit 1
+[[ -z "$API_SERVER_URL" ]] && echo "Error: API_SERVER_URL is not set." && exit 1
+[[ -z "$SLACK_WEBHOOK" ]] && echo "Error: SLACK_WEBHOOK is not set." && exit 1
 
 SA_TOKEN=$(cat /run/secrets/kubernetes.io/serviceaccount/token)
 [[ "$SA_TOKEN" == "" ]] && echo "Error: cannot get service account token." && exit 1
@@ -20,16 +24,17 @@ SKIP_NAMESPACES="admin azureserviceoperator-system cert-manager default flux-sys
 
 # Function to log failed deployment to Cosmos DB
 log_failed_deployment_to_cosmos() {
-    local cosmos_key=$1
-    local cluster_name=$2
-    local namespace=$3
-    local deployment_name=$4
-    local ready_replicas=$5
-    local desired_replicas=$6
-    local slack_channel=$7
-    local slack_webhook=$8
+    local cluster_name=$1
+    local namespace=$2
+    local deployment_name=$3
+    local ready_replicas=$4
+    local desired_replicas=$5
+    local slack_channel=$6
 
-    python3 send-json-to-cosmos.py "$cosmos_key" "$cluster_name" "$namespace" "$deployment_name" "$ready_replicas" "$desired_replicas" "$slack_channel" "$slack_webhook"
+    if ! python3 send-json-to-cosmos.py --clusterName "$cluster_name" --namespace "$namespace" --deploymentName "$deployment_name" --readyReplicas "$ready_replicas" --desiredReplicas "$desired_replicas" --slackChannel "$slack_channel"; then
+        echo "Error: Failed to log deployment $deployment_name in namespace $namespace to Cosmos DB"
+        return 1
+    fi
 }
 
 # Iterate through all namespaces
@@ -49,11 +54,13 @@ for NAMESPACE_ROW in $(echo "${NAMESPACES}" | jq -r '.items[] | @base64'); do
 
         # Check if the deployment has failed
         if [[ "$ready_replicas" != "$desired_replicas" ]]; then
-            log_failed_deployment_to_cosmos "$COSMOS_KEY" "$CLUSTER_NAME" "$NAMESPACE" "$deployment_name" "$ready_replicas" "$desired_replicas" "$TEAM_SLACK_CHANNEL" "$SLACK_WEBHOOK"
+            if ! log_failed_deployment_to_cosmos "$CLUSTER_NAME" "$NAMESPACE" "$deployment_name" "$ready_replicas" "$desired_replicas" "$TEAM_SLACK_CHANNEL"; then
+                echo "Warning: Failed to log deployment $deployment_name to Cosmos DB, continuing with other deployments..."
+            fi
         fi
     done <<<"$DEPLOYMENTS"
 done
 
 if [[ $MODE == "notify" ]]; then
-python3 send-notification-to-slack.py "$COSMOS_KEY" "$SLACK_WEBHOOK" 
+    python3 send-notification-to-slack.py --slack_webhook "$SLACK_WEBHOOK"
 fi

@@ -1,22 +1,36 @@
 import sys
 import uuid
-from azure.cosmos import CosmosClient
+from azure.cosmos import CosmosClient, PartitionKey
+from azure.identity import DefaultAzureCredential
+import argparse
 
 # Get the command-line arguments
 cosmos_account = "pipeline-metrics"
 cosmos_db = "platform-metrics"
 cosmos_container = "failed-deployments"
-cosmos_key = sys.argv[1]
-cluster_name = sys.argv[2]
-namespace = sys.argv[3]
-deployment_name = sys.argv[4]
-ready_replicas = sys.argv[5]
-desired_replicas = sys.argv[6]
-slack_channel = sys.argv[7]
 
-# Define the Cosmos DB endpoint and initialize the Cosmos DB client and container
+parser = argparse.ArgumentParser(description="Script to send JSON data to Cosmos DB.")
+
+parser.add_argument('--clusterName', type=str, required=True, help='The cluster name')
+parser.add_argument('--namespace', type=str, required=True, help='The namespace')
+parser.add_argument('--deploymentName', type=str, required=True, help='The deprecated chart name')
+parser.add_argument('--readyReplicas', type=str, required=True, help='The current number of replica pods in read state')
+parser.add_argument('--desiredReplicas', type=str, required=True, help='The desired number of replica pods')
+parser.add_argument('--slackChannel', type=str, required=True, help='The Slack channel to notify')
+
+# Parse the arguments
+args = parser.parse_args()
+
+cluster_name = args.clusterName
+namespace = args.namespace
+deployment_name = args.deploymentName
+ready_replicas = args.readyReplicas
+desired_replicas = args.desiredReplicas
+slack_channel = args.slackChannel
+
 endpoint = f"https://{cosmos_account}.documents.azure.com:443/"
-client = CosmosClient(endpoint, cosmos_key)
+credential = DefaultAzureCredential()
+client = CosmosClient(endpoint, credential=credential)
 database = client.get_database_client(cosmos_db)
 container = database.get_container_client(cosmos_container)
 
@@ -34,4 +48,4 @@ document = {
 }
 container.create_item(body=document)
 
-print(f"Document {document} created successfully in Cosmos DB")
+print(document, "created successfully in Cosmos")
