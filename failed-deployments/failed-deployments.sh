@@ -32,7 +32,7 @@ log_failed_deployment_to_cosmos() {
     local slack_channel=$6
 
     if ! python3 send-json-to-cosmos.py --clusterName "$cluster_name" --namespace "$namespace" --deploymentName "$deployment_name" --readyReplicas "$ready_replicas" --desiredReplicas "$desired_replicas" --slackChannel "$slack_channel"; then
-        logging.error "Failed to log deployment $deployment_name in namespace $namespace to Cosmos DB"
+        echo "Error: Failed to log deployment $deployment_name in namespace $namespace to Cosmos DB"
         return 1
     fi
 }
