@@ -23,7 +23,7 @@ parser.add_argument('--isError', action='store_true', help='A boolean flag indic
 # Parse the arguments
 args = parser.parse_args()
 
-chart_name = args.chartNames
+chart_name = args.chartName
 namespace = args.namespace
 cluster_name = args.clusterName
 deprecated_chart_name = args.deprecatedChartName
