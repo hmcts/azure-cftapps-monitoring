@@ -64,7 +64,7 @@ do
     if [[ -s /tmp/acr_repo.json ]]
     then
       # Parse both date and tag in single jp call
-      acr_latest_prod=$(jp 'tags[?starts_with(name, `"prod-"`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]' /tmp/acr_repo.json)
+      acr_latest_prod=$(cat /tmp/acr_repo.json |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]")
       if [[ "$acr_latest_prod" == "null" ]] || [[ "$acr_latest_prod" == "" ]]
       then
         echo "Error getting latest prod tag for ${repo} - empty response." && continue
