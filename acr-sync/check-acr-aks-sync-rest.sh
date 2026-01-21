@@ -21,19 +21,18 @@ do
   for _skip_ns in $skip_namespaces; do [ "$_skip_ns" == "$_ns" ] && continue 2; done
   images=$(curl -k --silent -H "Authorization: Bearer $sa_token" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/${_ns}/pods/ --insecure \
     | jp -u 'join(`"\n"`, items[?status.phase!=`"Succeeded"`].spec.containers[].image)' |grep 'prod-' |grep -v 'test:prod-' | sort |uniq)
-  image_count=$(echo "$images" | grep -c .)
-  echo "** Namespace $_ns hosts $image_count unique images to check..."
-  namespace_timestamp=$(date '+%s')
+  echo "** Namespace $_ns hosts $(echo $images |wc -w) unique images to check..."
   acr_token=""
   for _image in ${images}
   do
-    acr="${_image%%/*}"
-    rt="${_image#*/}"
-    repo="${rt%:*}"
-    tag="${rt##*:}"
+    acr="$(echo $_image |cut -d / -f 1)"
+    rt="$(echo $_image |cut -d / -f 2,3)"
+    repo="$(echo $rt |cut -d : -f 1)"
+    tag="$(echo $rt |cut -d : -f 2)"
 
+    now_ts=$(date '+%s')
     # acr access tokens are valid for 60secs
-    if [[ "$acr_token" == "" ]] || [[ $(($namespace_timestamp - $acr_token_ts)) > 45 ]]
+    if [[ "$acr_token" == "" ]] || [[ $(($now_ts - $acr_token_ts)) > 45 ]]
     then
       token_retries=0
       while true
@@ -41,12 +40,16 @@ do
         [[ $token_retries -gt 2 ]] && echo "Error: cannot get acr token for repository ${repo}" && exit 1
         if  [[ ${acr} == "hmctsprivate.azurecr.io" ]] ;
         then
+          set +x
           acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
           token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+          [[ "$ACR_SYNC_DEBUG" == "true" ]] && set -x
         elif [[ ${acr} == "hmctsprod.azurecr.io" ]] ;
         then
+          set +x
           acr_credentials=$(echo -n "acrsync:$hmctsprod_token_password" | base64)
           token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+          [[ "$ACR_SYNC_DEBUG" == "true" ]] && set -x
         else
           token_response=$(curl --silent "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
         fi
@@ -63,23 +66,21 @@ do
       "https://${acr}/acr/v1/${repo}/_tags?n=${ACR_MAX_RESULTS}" > /tmp/acr_repo.json
     if [[ -s /tmp/acr_repo.json ]]
     then
-      # Parse both date and tag in single jp call
       acr_latest_prod=$(cat /tmp/acr_repo.json |jp "tags[?starts_with(name, \`\"prod-\"\`)]|max_by([*], &lastUpdateTime)|[lastUpdateTime,name]")
       if [[ "$acr_latest_prod" == "null" ]] || [[ "$acr_latest_prod" == "" ]]
       then
         echo "Error getting latest prod tag for ${repo} - empty response." && continue
       fi
-      # Extract both values from array
-      acr_date=$(echo "$acr_latest_prod" | jp -u '[0]')
-      acr_tag=$(echo "$acr_latest_prod" | jp -u '[1]')
     else
       echo "Error getting repository ${repo} - empty response." && continue
     fi
+    acr_tag=$(echo $acr_latest_prod |jp -u '[1]')
     # if latest prod tag in acr is deployed to aks, registry and cluster are in sync
     [[ "$acr_tag" == "$tag" ]] && echo "ACR and AKS synced on tag ${repo}:${tag}" && continue
-    acr_ts=$(date -d "$acr_date" '+%s')
+    acr_date=$(echo $acr_latest_prod |jp -u '[0]')
+    acr_ts=$(date -d $acr_date '+%s')
     # if latest acr tag is older than 3min and still not deployed to aks, send notification
-    sync_time_diff=$(($namespace_timestamp - $acr_ts))
+    sync_time_diff=$(($now_ts - $acr_ts))
     if [[ $sync_time_diff > 180 ]]
     then
       slack_message="Warning: AKS cluster $aks_cluster is running ${repo}:${tag} instead of ${repo}:${acr_tag} ($acr_date)."
