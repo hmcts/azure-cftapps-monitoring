@@ -41,14 +41,14 @@ do
         if  [[ ${acr} == "hmctsprivate.azurecr.io" ]] ;
         then
           set +x
-          acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64)
+          acr_credentials=$(echo -n "acrsync:$hmctsprivate_token_password" | base64 -w0)
           token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
           [[ "$ACR_SYNC_DEBUG" == "true" ]] && set -x
         elif [[ ${acr} == "hmctsprod.azurecr.io" ]] ;
         then
           set +x
-          acr_credentials=$(echo -n "acr-sync:$hmctsprod_token_password" | base64)
-          token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://hmctsprod.azurecr.io/oauth2/token?scope=repository:*:metadata_read&service=hmctsprod.azurecr.io")
+          acr_credentials=$(echo -n "acr-sync:$hmctsprod_token_password" | base64 -w0)
+          token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
           [[ "$ACR_SYNC_DEBUG" == "true" ]] && set -x
         else
           token_response=$(curl --silent "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
