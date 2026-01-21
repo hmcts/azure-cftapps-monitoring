@@ -47,8 +47,8 @@ do
         elif [[ ${acr} == "hmctsprod.azurecr.io" ]] ;
         then
           set +x
-          acr_credentials=$(echo -n "acrsync:$hmctsprod_token_password" | base64)
-          token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
+          acr_credentials=$(echo -n "acr-sync:$hmctsprod_token_password" | base64)
+          token_response=$(curl --silent -H "Authorization: Basic $acr_credentials" "https://hmctsprod.azurecr.io/oauth2/token?scope=repository:*:metadata_read&service=hmctsprod.azurecr.io")
           [[ "$ACR_SYNC_DEBUG" == "true" ]] && set -x
         else
           token_response=$(curl --silent "https://${acr}/oauth2/token?scope=repository:*:metadata_read&service=${acr}")
