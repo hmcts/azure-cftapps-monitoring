@@ -1,0 +1,60 @@
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'acr-sync/**'
+      - '.github/workflows/acr-sync.yaml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'acr-sync/**'
+      - '.github/workflows/acr-sync.yaml'
+
+name: Publish
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: 'Az CLI login'
+        uses: azure/login@v2
+        with:
+          client-id: c6a3a50b-762f-4b4f-b7ec-f1d84be20cef # DTS Platform Operations GitHub Actions ACR Publisher 1
+          tenant-id: 531ff96d-0ae9-462a-8d2d-bec7c0b42082 # HMCTS.NET
+          allow-no-subscriptions: true
+
+      - name: "Get Short Sha Hash"
+        id: get-short-sha
+        uses: actions/github-script@v8.0.0
+        with:
+          script: |
+            const shortSha = context.sha.substring(0, 7)
+            core.setOutput('shortSha', shortSha)
+
+      - name: 'Get Commit Timestamp'
+        id: get-timestamp
+        run: |
+          TIMESTAMP=$(git log -1 --format='%cI' | sed -e's/[-T:]//g' -e's/+.*$//g')
+          echo "::set-output name=timestamp::$TIMESTAMP"
+
+      - name: 'ACR Login'
+        run: |
+          az acr login --name hmctsprod
+
+      - name: 'Build and push PR image'
+        if: startsWith(github.ref, 'refs/pull')
+        run: |
+          docker build acr-sync -t hmctsprod.azurecr.io/check-acr-sync:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+          docker push hmctsprod.azurecr.io/check-acr-sync:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+
+      - name: 'Build and push prod image'
+        if: github.ref == 'refs/heads/master'
+        run: |
+          docker build acr-sync -t hmctsprod.azurecr.io/check-acr-sync:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+          docker push hmctsprod.azurecr.io/check-acr-sync:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}

@@ -1,19 +1,33 @@
 on:
-  pull_request:
-    branches:
-      - master
   push:
     branches:
       - master
+    paths:
+      - 'helm-base-versions/**'
+      - '.github/workflows/helm-base-versions.yaml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'helm-base-versions/**'
+      - '.github/workflows/helm-base-versions.yaml'
 
 name: Publish
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v6
+
+      - name: 'Az CLI login'
+        uses: azure/login@v2
+        with:
+          client-id: c6a3a50b-762f-4b4f-b7ec-f1d84be20cef # DTS Platform Operations GitHub Actions ACR Publisher 1
+          tenant-id: 531ff96d-0ae9-462a-8d2d-bec7c0b42082 # HMCTS.NET
+          allow-no-subscriptions: true
 
       - name: "Get Short Sha Hash"
         id: get-short-sha
@@ -29,16 +43,36 @@ jobs:
           TIMESTAMP=$(git log -1 --format='%cI' | sed -e's/[-T:]//g' -e's/+.*$//g')
           echo "::set-output name=timestamp::$TIMESTAMP"
 
+      - name: 'ACR Login'
+        run: |
+          az acr login --name hmctsprod
+
+      # HMCTSPROD ACR
+      - name: 'Build and push PR image - hmctsprod'
+        if: startsWith(github.ref, 'refs/pull')
+        run: |
+          docker build helm-base-versions -t hmctsprod.azurecr.io/helm-base-versions:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+          docker push hmctsprod.azurecr.io/helm-base-versions:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+
+      - name: 'Build and push prod image - hmctsprod'
+        if: github.ref == 'refs/heads/master'
+        run: |
+          docker build helm-base-versions -t hmctsprod.azurecr.io/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+          docker push hmctsprod.azurecr.io/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+
+      # HMCTSPUBLIC ACR - to be deprecated post migration to hmctsprod
       - name: 'Build and push image'
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
+
       - run: |
           docker build helm-base-versions -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
         if: startsWith(github.ref, 'refs/pull')
+
       - run: |
           docker build helm-base-versions -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/helm-base-versions:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
