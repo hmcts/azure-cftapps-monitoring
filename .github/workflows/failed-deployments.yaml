@@ -47,6 +47,7 @@ jobs:
         run: |
           az acr login --name hmctsprod
 
+      # HMCTSPROD ACR
       - name: 'Build and push PR image'
         if: startsWith(github.ref, 'refs/pull')
         run: |
@@ -58,3 +59,21 @@ jobs:
         run: |
           docker build failed-deployments -t hmctsprod.azurecr.io/failed-deployments:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
           docker push hmctsprod.azurecr.io/failed-deployments:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+
+      # HMCTSPUBLIC ACR - to be deprecated post migration to hmctsprod
+      - name: 'Build and push image'
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - run: |
+          docker build failed-deployments -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/failed-deployments:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/failed-deployments:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+        if: startsWith(github.ref, 'refs/pull')
+
+      - run: |
+          docker build failed-deployments -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/failed-deployments:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/failed-deployments:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+        if: github.ref == 'refs/heads/master'
