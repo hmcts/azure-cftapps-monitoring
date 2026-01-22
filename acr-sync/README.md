@@ -12,10 +12,11 @@ This project monitors whether AKS clusters are running the latest production-rea
 acr-sync/
 ├── check-acr-aks-sync-rest.sh    # Main monitoring script
 ├── Dockerfile                     # Container image definition
-├── acr-sync-build.yaml           # ACR task build definition
 ├── example-job.yaml              # Kubernetes Job example
 └── README.md                      # This file
 ```
+
+Note: Image building is managed by the GitHub Actions workflow (`.github/workflows/acr-sync.yaml`).
 
 ## Components
 
@@ -54,23 +55,7 @@ Alpine Linux-based container image with:
 - **jp**: JMESPath CLI tool for JSON parsing (v0.2.1)
 - **Entry point**: Runs `check-acr-aks-sync-rest.sh`
 
-### 3. `acr-sync-build.yaml`
-
-Azure Container Registry task definition for automated image building:
-
-```yaml
-version: v1.0.0
-steps:
-  - build: -t {{.Run.Registry}}/check-acr-sync:{{.Run.ID}} -f Dockerfile .
-  - push: ["{{.Run.Registry}}/check-acr-sync:{{.Run.ID}}"]
-```
-
-**Usage**: Can be triggered manually, on Git commits, or on a schedule via Azure CLI:
-```bash
-az acr run -f acr-sync-build.yaml --registry <registry-name> .
-```
-
-### 4. `example-job.yaml`
+### 3. `example-job.yaml`
 
 Kubernetes Job manifest showing how to deploy the monitor in a cluster:
 
@@ -115,6 +100,15 @@ export HMCTSPROD_TOKEN_PASSWORD="token"
 ./check-acr-aks-sync-rest.sh
 ```
 
+### Dual-Registry Support
+
+The script supports image verification across multiple Azure Container Registries:
+
+- **hmctsprivate.azurecr.io**: Uses `acrsync` username with private registry token
+- **hmctsprod.azurecr.io**: Uses `acr-sync` username with prod registry token
+
+The script automatically detects which registry an image originates from and uses the appropriate credentials for token generation. This allows monitoring of images from both private and production registries in the same cluster sync operation.
+
 ### As Kubernetes Job
 
 Apply the example job manifest (after customizing):
@@ -134,8 +128,8 @@ kubectl apply -f example-job.yaml
 | 3 | `SLACK_CHANNEL` | Yes | Default Slack channel for alerts |
 | 4 | `SLACK_ICON` | Yes | Slack emoji icon for bot (without colons) |
 | 5 | `ACR_MAX_RESULTS` | No | Max tags to query per repo (default: 100) |
-| 6 | `HMCTSPRIVATE_TOKEN_PASSWORD` | No | ACR token for `hmctsprivate.azurecr.io` |
-| 7 | `HMCTSPROD_TOKEN_PASSWORD` | No | ACR token for `hmctsprod.azurecr.io` |
+| 6 | `HMCTSPRIVATE_TOKEN_PASSWORD` | No | ACR token for `hmctsprivate.azurecr.io` (if monitoring private registry images) |
+| 7 | `HMCTSPROD_TOKEN_PASSWORD` | No | ACR token for `hmctsprod.azurecr.io` (required for monitoring prod registry images) |
 
 ### Namespace Labels
 
@@ -190,25 +184,30 @@ Alerts only trigger when deployments are genuinely lagging, reducing false posit
 
 ## Building and Deployment
 
-For changes via Git and pull requests a merge to the main branch will trigger the ACR task to run as it has source triggering enabled so the following steps are for reference only or testing purposes.
+### Automated via GitHub Actions (Recommended)
 
-### Build Image Locally
+Changes are automatically built and deployed via the GitHub Actions workflow (`.github/workflows/acr-sync.yaml`):
+
+- **On Pull Requests**: Builds image with tag `pr-<number>-<short-sha>` and pushes to ACR
+- **On Merge to Main**: Builds image with tag `prod-<short-sha>-<timestamp>` and pushes to ACR
+
+The workflow uses Azure federated identity for authentication, eliminating the need for credential secrets.
+
+### Build Image Locally (For Testing)
 
 ```bash
 docker build -t check-acr-sync:latest .
 ```
 
-### Push to ACR
+### Push Manually to ACR (For Testing)
 
 ```bash
-docker tag check-acr-sync:latest <registry>.azurecr.io/check-acr-sync:v1
-docker push <registry>.azurecr.io/check-acr-sync:v1
-```
+# Login to ACR
+az acr login --name hmctsprod
 
-### Via ACR Task (Recommended)
-
-```bash
-az acr run -f acr-sync-build.yaml --registry <registry-name> .
+# Tag and push
+docker tag check-acr-sync:latest hmctsprod.azurecr.io/check-acr-sync:v1
+docker push hmctsprod.azurecr.io/check-acr-sync:v1
 ```
 
 ## Kubernetes RBAC

@@ -3,14 +3,14 @@ on:
     branches:
       - master
     paths:
-      - 'failed-deployments/**'
-      - '.github/workflows/failed-deployments.yaml'
+      - 'acr-sync/**'
+      - '.github/workflows/acr-sync.yaml'
   pull_request:
     branches:
       - master
     paths:
-      - 'failed-deployments/**'
-      - '.github/workflows/failed-deployments.yaml'
+      - 'acr-sync/**'
+      - '.github/workflows/acr-sync.yaml'
 
 name: Publish
 
@@ -50,11 +50,11 @@ jobs:
       - name: 'Build and push PR image'
         if: startsWith(github.ref, 'refs/pull')
         run: |
-          docker build failed-deployments -t hmctsprod.azurecr.io/failed-deployments:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
-          docker push hmctsprod.azurecr.io/failed-deployments:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+          docker build acr-sync -t hmctsprod.azurecr.io/check-acr-sync:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
+          docker push hmctsprod.azurecr.io/check-acr-sync:pr-${{github.event.number}}-${{ steps.get-short-sha.outputs.shortSha }}
 
       - name: 'Build and push prod image'
         if: github.ref == 'refs/heads/master'
         run: |
-          docker build failed-deployments -t hmctsprod.azurecr.io/failed-deployments:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
-          docker push hmctsprod.azurecr.io/failed-deployments:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+          docker build acr-sync -t hmctsprod.azurecr.io/check-acr-sync:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
+          docker push hmctsprod.azurecr.io/check-acr-sync:prod-${{ steps.get-short-sha.outputs.shortSha }}-${{ steps.get-timestamp.outputs.timestamp }}
