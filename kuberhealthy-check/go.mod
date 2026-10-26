@@ -1,6 +1,6 @@
 module github.com/hmcts/azure-cftapps-monitoring
 
-go 1.24.0
+go 1.25
 
 toolchain go1.25.1
 
@@ -162,7 +162,7 @@ require (
 	github.com/antihax/optional v1.0.0 // indirect
 	github.com/apache/arrow/go/v10 v10.0.1 // indirect
 	github.com/apache/arrow/go/v11 v11.0.0 // indirect
-	github.com/apache/thrift v0.16.0 // indirect
+	github.com/apache/thrift v0.24.0 // indirect
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/aws/aws-sdk-go v1.25.24 // indirect
